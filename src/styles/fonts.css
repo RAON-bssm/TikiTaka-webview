@@ -1,8 +1,10 @@
 /*
- * 웹폰트. 파일은 public/fonts/에 앱(assets/fonts/)과 같은 원본을 그대로 둔다.
+ * 웹폰트. 브라우저는 그 글꼴을 쓰는 글자가 화면에 나올 때 받는다.
  *
  * OkDanDan-Bold (Ok단단체, © OKTICON): 웹사이트·임베딩 사용은 허용, 폰트 파일 수정·재배포는 금지.
- * → WOFF2 변환이나 서브셋 없이 원본 TTF를 쓴다. https://noonnu.cc/en/font_page/1664
+ * → 앱 assets/fonts/의 원본 TTF를 변환·서브셋 없이 쓴다. https://noonnu.cc/en/font_page/1664
+ *
+ * Pretendard Medium: styles/pretendard-medium.css (공식 동적 서브셋, 파일 수정 금지)
  */
 @font-face {
   font-family: 'OkDanDan-Bold';

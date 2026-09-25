@@ -63,7 +63,7 @@
   --font-size-xl: 20px;
   --line-height-xl: 24px;
 
-  /* OkDanDan-Bold는 styles/fonts.css에서 선언. TODO: 본문 글자가 생기면 Pretendard 추가 (파일이 커서 필요할 때만) */
+  /* @font-face는 styles/fonts.css. Pretendard는 Medium(500)만 있다 (말풍선용). 다른 굵기가 필요하면 추가 */
   --font-body: 'Pretendard', system-ui, -apple-system, sans-serif;
   --font-title: 'OkDanDan-Bold', 'Pretendard', system-ui, sans-serif;
 }
