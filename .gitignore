@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env (키는 .env에만, 커밋 금지)
+.env
+.env.*
+!.env.example
