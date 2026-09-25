@@ -1,0 +1,68 @@
+/* TODO: 디자인 확정 전 임시 모양 (계획 11장 #9) */
+.speech-bubble {
+  position: relative;
+  width: max-content;
+  max-width: 10em;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  color: var(--color-gray-800);
+  font-family: var(--font-body);
+  font-weight: 600; /* Pretendard SemiBold */
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  /* 카카오 오버레이 컨테이너가 nowrap을 걸어 두므로 되돌려야 줄바꿈된다 */
+  white-space: normal;
+  transform-origin: 50% 100%;
+  animation: speech-bubble-pop 180ms ease-out;
+}
+
+/* 긴 말은 2줄에서 말줄임한다. 전체 대화는 RN 챗봇 화면이 보여 준다 */
+.speech-bubble__text {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 꼬리: 테두리색 삼각형 위에 흰 삼각형을 1px 올려 테두리가 이어져 보이게 한다 */
+.speech-bubble::before,
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: var(--space-sm) solid transparent;
+  border-bottom: 0;
+}
+
+.speech-bubble::before {
+  border-top-color: var(--color-gray-200);
+}
+
+.speech-bubble::after {
+  margin-top: -1px;
+  border-top-color: var(--color-white);
+}
+
+@keyframes speech-bubble-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speech-bubble {
+    animation: none;
+  }
+}

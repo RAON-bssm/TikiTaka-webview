@@ -71,16 +71,17 @@ pnpm gen:manifest  # public/parts → src/parts/manifest.ts 재생성
 ```
 public/
 ├ parts/                 # 기본 캐릭터 파츠 (앱 assets/character와 같은 구조)
-└ fonts/                 # Pretendard, OkDanDan-Bold 웹폰트
+└ fonts/                 # OkDanDan-Bold (앱과 같은 원본 TTF), pretendard/ (공식 SemiBold 동적 서브셋 + LICENSE)
 scripts/gen-manifest.mjs # public/parts → src/parts/manifest.ts
 src/
 ├ main.tsx
 ├ App.tsx                # 브리지 초기화 + MapScreen
 ├ bridge/                # bridge.ts(메시지 타입), schema.ts(zod 스키마), transport.ts(수신/전송), mock.ts(단독 실행용)
-├ map/                   # MapScreen, 동네 중심 좌표(geocoder+캐시), 캐릭터 이동 허용 영역
+├ map/                   # MapScreen, CharacterMarker(캐릭터+이름표 오버레이), 동네 중심 좌표(geocoder+캐시), bounds(캐릭터 이동 허용 영역), placement(첫 배치)
 ├ character/             # layers.ts, resolvePart.ts, imageCache.ts, CharacterSprite, RoamingCharacter, useRoaming
-├ bubble/                # 말풍선
+├ bubble/                # SpeechBubble, useBubbles(캐릭터별 말풍선 + 사라지는 타이머)
 ├ sticker/               # (M6) 스티커 레이어·편집 모드
+├ dev/                   # 개발 전용 화면 (예: SpritePreview, `pnpm dev`에서 `/?sprite`). 운영 번들에 들어가지 않게 `import.meta.env.DEV`로 막는다
 ├ parts/manifest.ts      # 번들 파츠 경로 목록 (자동 생성)
 └ styles/tokens.css      # 디자인 토큰 (앱 colors.js 값)
 docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
@@ -149,6 +150,7 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - 모든 파츠는 **1440×1440 투명 WebP**이며 정위치에 그려져 있습니다. 같은 크기로 겹치기만 하면 정렬됩니다.
 - 정사각형 컨테이너 안에 레이어 박스를 `position: absolute; top/left: -20.3125%; width/height: 140.625%`로 두고, 각 `<img>`는 박스를 꽉 채웁니다(`object-fit: contain`). 헤어가 넘칠 수 있으므로 `overflow`는 보이게 둡니다.
 - 이 상수(`OVERSCALE = 1440 / 1024`)를 임의로 바꾸지 마세요. 앱과 크기가 달라집니다.
+- **대기 모션(웹 전용):** 레이어를 순서대로 둔 채 머리/몸 묶음으로 나눠, 몸은 발끝 기준으로 살짝 늘었다 줄고 머리는 따라 오르내립니다(`CharacterSprite.css`). 뒷머리·악세서리·하이라이트는 머리, 몸·코스튬은 몸을 따릅니다. `transform`만 쓰고, 캐릭터마다 id로 시작 시점을 달리합니다. 앱 `LAYERS`에는 이 구분을 넣지 않습니다.
 
 ### 7.3 파츠 해석 (하이브리드)
 
@@ -190,7 +192,10 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - **색상:** `primary-600` `#FC8253`(주황, 브랜드), `secondary-500` `#4078FF`(파랑), `gray-50` `#F8F9FB` ~ `gray-800` `#1A202C`, 흰색 `#FFFFFF`. 각 팔레트의 전체 스케일은 앱 `src/constants/colors.js` 기준입니다.
 - **간격:** `xs` 4 / `sm` 8 / `md` 12 / `lg` 16 / `xl` 20 / `2xl` 24 / `3xl` 40 / `4xl` 48 (px)
 - **반경:** `xs` 4 / `sm` 8 / `md` 12 / `lg` 16 / `xl` 24 / `full` 9999 (px)
-- **폰트:** Pretendard(Regular/Medium/Bold, 본문), OkDanDan-Bold(캐릭터 이름표·강조). 웹폰트로 변환해 `public/fonts/`에 둡니다.
+- **폰트:** Pretendard(Regular/Medium/Bold, 본문), OkDanDan-Bold(캐릭터 이름표·강조). 앱 `assets/fonts/`의 파일을 `public/fonts/`에 두고 `src/styles/fonts.css`에서 선언합니다.
+  - **OkDanDan(Ok단단체)은 웹 사용·임베딩은 되지만 폰트 파일 수정·재배포가 금지**입니다. WOFF2 변환이나 서브셋을 하지 말고 원본 TTF를 그대로 씁니다.
+  - **Pretendard는 `'Pretendard'`가 예약 글꼴 이름(OFL)이라, 직접 변환·서브셋한 파일을 이 이름으로 쓰면 안 됩니다.** npm `pretendard` 패키지의 공식 동적 서브셋(`dist/web/static/woff2-dynamic-subset/`, 굵기당 92조각)을 그대로 복사하고, `src/styles/pretendard-semibold.css`에서 경로만 바꿔 선언합니다. 화면에 나온 글자가 든 조각만 받습니다.
+  - 지금은 SemiBold(600, 말풍선)만 있습니다. 다른 굵기가 필요하면 같은 방법으로 추가합니다.
 - 지도 로드 전 배경은 `gray-50`(`#F8F9FB`)입니다. 흰 화면이 번쩍이지 않게 `html`, `body`, `#root`에 지정합니다.
 
 ---

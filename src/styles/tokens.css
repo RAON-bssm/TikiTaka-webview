@@ -13,6 +13,8 @@
   --color-gray-600: #4a5568;
   --color-gray-700: #2d3748;
   --color-gray-800: #1a202c;
+  /* 반투명이 필요할 때: rgb(var(--color-gray-800-rgb) / 60%). 값은 --color-gray-800과 같아야 한다 */
+  --color-gray-800-rgb: 26 32 44;
 
   --color-primary-100: #fff3ee;
   --color-primary-200: #fed8ca;
@@ -63,7 +65,7 @@
   --font-size-xl: 20px;
   --line-height-xl: 24px;
 
-  /* TODO(M2): public/fonts/에 Pretendard, OkDanDan-Bold 웹폰트 추가 후 @font-face 선언 */
+  /* @font-face는 styles/fonts.css. Pretendard는 SemiBold(600)만 있다 (말풍선용). 다른 굵기가 필요하면 추가 */
   --font-body: 'Pretendard', system-ui, -apple-system, sans-serif;
   --font-title: 'OkDanDan-Bold', 'Pretendard', system-ui, sans-serif;
 }

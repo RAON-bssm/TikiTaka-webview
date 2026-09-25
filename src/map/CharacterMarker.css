@@ -1,0 +1,38 @@
+.character-marker {
+  position: relative;
+}
+
+.character-marker__body {
+  cursor: pointer;
+}
+
+/* 이름표는 발밑에 붙인다. absolute라 오버레이 높이에 들어가지 않아 발 위치(yAnchor: 1)가 유지된다 */
+/* TODO: 디자인 확정 전 임시 모양 (계획 11장 #9) */
+.character-marker__name {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 8em;
+  padding: var(--space-xs);
+  border-radius: var(--radius-xs);
+  background: rgb(var(--color-gray-800-rgb) / 60%);
+  color: var(--color-white);
+  font-family: var(--font-title);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* 말풍선은 머리 위 가운데. 등장 애니메이션(transform)과 겹치지 않게 위치는 바깥 div가 잡는다 */
+.character-marker__bubble {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: var(--space-sm);
+  pointer-events: none;
+}

@@ -1,0 +1,65 @@
+.character-sprite {
+  position: relative;
+  pointer-events: none;
+}
+
+/* 앱 Character.tsx와 같은 기하: 1024 디자인 프레임이 컨테이너를 채우도록 1440 캔버스를 확대 (OVERSCALE) */
+.character-sprite__layers {
+  position: absolute;
+  top: -20.3125%;
+  left: -20.3125%;
+  width: 140.625%;
+  height: 140.625%;
+  animation-duration: 2400ms;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: var(--idle-delay, 0ms);
+}
+
+.character-sprite__part {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 숨쉬기: 발끝(디자인 프레임 하단 ≈ 캔버스 85.5%)을 기준으로 몸이 아주 살짝 늘었다 줄어든다 */
+.character-sprite__layers--body {
+  transform-origin: 50% 85.5%;
+  animation-name: character-breathe;
+}
+
+/* 머리: 몸이 늘어난 만큼 따라 올라가되, 조금 늦게 움직여 살아 있는 느낌을 낸다 */
+.character-sprite__layers--head {
+  animation-name: character-head-bob;
+}
+
+@keyframes character-breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.025);
+  }
+}
+
+@keyframes character-head-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  10% {
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateY(-0.9%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-sprite__layers {
+    animation: none;
+  }
+}

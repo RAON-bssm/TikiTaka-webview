@@ -157,7 +157,9 @@ OVERSCALE = 1440 / 1024 = 1.40625
 - 색상 원본: 앱 `src/constants/colors.js`
   - primary 600 `#FC8253`(주황, 브랜드), secondary 500 `#4078FF`(파랑)
   - gray 50 `#F8F9FB` ~ 800 `#1A202C`, 흰색은 `#FFFFFF`
-- 폰트: Pretendard(Regular/Medium/Bold, 본문), **OkDanDan-Bold**(제목·캐릭터 이름 등 강조). 앱 `assets/fonts/`의 파일을 웹폰트로 변환해 쓴다(라이선스 확인).
+- 폰트: Pretendard(Regular/Medium/Bold, 본문), **OkDanDan-Bold**(제목·캐릭터 이름 등 강조). 앱 `assets/fonts/`의 파일을 `public/fonts/`에 둔다.
+  - OkDanDan(Ok단단체, © OKTICON)은 웹사이트·임베딩 사용 허용, 폰트 파일 수정·재배포 금지다([눈누](https://noonnu.cc/en/font_page/1664)). 그래서 **변환·서브셋 없이 원본 TTF**(458KB)를 쓴다.
+  - Pretendard(OFL, 예약 글꼴 이름 'Pretendard')는 직접 수정한 파일을 쓸 수 없으므로 **공식 동적 서브셋 WOFF2**를 그대로 쓴다. 현재 SemiBold(600)만 넣었다(말풍선).
 - 간격: 4 / 8 / 12 / 16 / 20 / 24 / 40 / 48px. 반경: 4 / 8 / 12 / 16 / 24px.
 
 ---
@@ -324,9 +326,12 @@ key = 위 규칙으로 생성
 
 - `<CharacterSprite config size />`: 2.4의 기하 규칙대로 `<img>` 레이어를 합성한다.
 - 지도에는 `CustomOverlayMap`(`clickable: true`)으로 올리고, **발 위치가 좌표에 오도록** 하단 중앙을 기준점(`yAnchor: 1`)으로 둔다.
-- 줌 레벨에 따라 크기를 조절한다(예: 가까우면 64px, 멀면 40px, 아주 멀면 숨김).
-- 이름표: 캐릭터 아래에 OkDanDan 폰트로 표시한다(디자인 확인).
+- 줌 레벨에 따라 크기를 조절한다. 현재 임시값: 레벨 6 이하 64px, 7~8은 40px, 9 이상은 숨김(DOM에서 제거). 디자인 확인 후 확정한다.
+- 이름표: 캐릭터 발밑에 OkDanDan 폰트로 표시한다. `absolute`로 붙여 오버레이 높이에 넣지 않아야 발 위치(`yAnchor: 1`)가 유지된다. 디자인이 없어 반투명(60%) 검은(`gray-800`) 둥근 네모(`radius-xs`) + 흰 글씨로 임시 구현했다.
 - 겹침: 위도가 낮을수록(화면 아래일수록) 앞에 그린다(`zIndex`를 위도로 계산).
+- 첫 배치: 동네 중심 반경(`CHARACTER_AREA_RADIUS_M`, 임시 1500m) 안에서 캐릭터 id를 시드로 위치를 뽑는다. 앞서 선 캐릭터와 최소 간격(임시 300m)을 두려고 후보를 여러 개 뽑아 고른다. 같은 id 목록이면 항상 같은 자리다.
+  - 강·산 위에 설 수 있다. 땅 위로 제한하려면 별도 데이터가 필요하므로 경계 폴리곤(M5) 때 함께 검토한다.
+- 동시 표시 상한: RN이 보낸 순서대로 앞에서 15명.
 
 ### 6.3 돌아다니기
 
@@ -339,12 +344,19 @@ key = 위 규칙으로 생성
   - 화면 밖 캐릭터는 이동 계산만 하고 DOM은 갱신하지 않거나 정지
   - `document.visibilityState`가 hidden이면 전체 정지(탭 전환이나 백그라운드 시)
 - 캐릭터를 탭하면 걷기를 멈추고 살짝 튀는 애니메이션 → `characterTap` 전송. 챗봇 UI는 RN이 띄운다.
+  - 탭과 튀는 모션(Web Animations API, `transform`만)은 구현됨. 걷기 멈춤은 돌아다니기와 함께 한다.
 
 ### 6.4 말풍선
 
 - `showBubble`을 받으면 캐릭터 머리 위에 표시하고, `durationMs`(기본 4초) 후 사라진다.
 - 긴 텍스트는 2줄에서 말줄임한다. 전체 대화는 RN 챗봇 화면의 몫이다.
 - 한 캐릭터에 새 말풍선이 오면 이전 것을 교체한다.
+- 구현 메모
+  - 타이머는 마커가 아니라 `useBubbles`에 둔다. 줌아웃으로 캐릭터가 숨어 있어도 시간이 되면 사라진다.
+  - 말풍선이 뜬 캐릭터는 다른 캐릭터보다 앞에 그린다(`zIndex`를 올린다).
+  - 화면에 없는 캐릭터 id의 말풍선은 그리지 않고, 시간이 되면 지운다. `init`/`setNeighborhood`를 받으면 모두 지운다.
+  - 카카오 오버레이 컨테이너가 `white-space: nowrap`을 걸어 두므로 말풍선에서 `normal`로 되돌린다.
+  - 모양은 디자인이 없어 흰 둥근 상자 + 꼬리로 임시 구현했다(11장 #9).
 
 ### 6.5 스티커 꾸미기 (마일스톤 M6, 추후)
 
@@ -386,6 +398,8 @@ tikitaka-map/
 │  ├ map/
 │  │  ├ MapScreen.tsx
 │  │  ├ useNeighborhoodCenter.ts   # geocoder + 캐시
+│  │  ├ CharacterMarker.tsx # 캐릭터 + 이름표 오버레이
+│  │  ├ placement.ts        # 첫 배치 (최소 간격)
 │  │  └ bounds.ts           # 캐릭터 이동 허용 영역 (반경 → 경계 폴리곤)
 │  ├ character/
 │  │  ├ layers.ts           # LAYERS, 기하 상수 (앱과 동일)
@@ -394,7 +408,7 @@ tikitaka-map/
 │  │  ├ CharacterSprite.tsx
 │  │  ├ RoamingCharacter.tsx
 │  │  └ useRoaming.ts       # 이동 상태 머신
-│  ├ bubble/SpeechBubble.tsx
+│  ├ bubble/               # SpeechBubble.tsx, useBubbles.ts (캐릭터별 말풍선 + 타이머)
 │  ├ sticker/               # M6
 │  ├ parts/manifest.ts      # 번들된 파츠 경로 목록 (스크립트로 생성)
 │  └ styles/tokens.css      # 앱 colors.js 값
@@ -450,7 +464,7 @@ tikitaka-map/
 | 7   | 동네 중심 좌표 / 경계 데이터 출처(서버 필드 or GeoJSON 번들)                                    | 백엔드·프론트 | M5          |
 | 8   | 스티커 상품 타입(`product_type`), 배치 저장 API                                                 | 백엔드        | M6          |
 | 9   | 지도 화면 디자인: 줌 범위, 캐릭터 크기, 이름표, 말풍선                                          | 디자인        | M2~M3       |
-| 10  | 폰트 웹 사용 라이선스(OkDanDan)                                                                 | 프론트        | M2          |
+| 10  | ~~폰트 웹 사용 라이선스(OkDanDan)~~ → 웹 사용 허용, 파일 수정 금지. 원본 TTF 사용 (2026-09-25)  | 프론트        | M2          |
 | 11  | Vercel 요금제 (Hobby는 비상업용 조건)                                                           | 팀            | 출시 전     |
 
 ---
