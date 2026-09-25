@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
-import { CustomOverlayMap, Map } from 'react-kakao-maps-sdk';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Map } from 'react-kakao-maps-sdk';
 import type { MapCharacter, Neighborhood } from '../bridge/bridge';
 import { send } from '../bridge/transport';
-import CharacterSprite from '../character/CharacterSprite';
+import CharacterMarker from './CharacterMarker';
+import { placeCharacters } from './placement';
 import useNeighborhoodCenter from './useNeighborhoodCenter';
 
 /** 초기 줌 레벨(숫자가 작을수록 확대). TODO: 디자인 확인 후 확정 (캐릭터 숨김 기준 레벨과 함께) */
@@ -10,11 +11,18 @@ const INITIAL_LEVEL = 6;
 
 const MAP_STYLE = { width: '100%', height: '100%' };
 
-/** 캐릭터 한 변(px). TODO: 줌 레벨별 크기는 디자인 확인 후 (계획 6.2) */
-const CHARACTER_SIZE = 72;
+/** 동시에 그리는 캐릭터 상한. RN이 보낸 순서대로 앞에서부터 그린다. TODO: 실기기 측정 후 조정 */
+const MAX_VISIBLE_CHARACTERS = 15;
 
-/** 돌아다니기(M3) 전 임시 배치: 중심에서 캐릭터마다 경도로 조금씩 띄운다 */
-const TEMP_SPACING_LNG = 0.004;
+/**
+ * 줌 레벨별 캐릭터 한 변(px). null이면 너무 멀어서 숨긴다.
+ * TODO: 디자인 확인 후 확정 (계획 6.2, 11장 #9)
+ */
+function characterSizeAt(level: number): number | null {
+  if (level <= 6) return 64;
+  if (level <= 8) return 40;
+  return null;
+}
 
 interface MapScreenProps {
   neighborhood: Neighborhood;
@@ -23,8 +31,24 @@ interface MapScreenProps {
 
 export default function MapScreen({ neighborhood, characters }: MapScreenProps) {
   const centerState = useNeighborhoodCenter(neighborhood);
+  const [level, setLevel] = useState(INITIAL_LEVEL);
   /** mapLoaded는 동네마다 한 번만 보낸다 (타일은 이동할 때마다 다시 로드된다) */
   const loadedFor = useRef<number | null>(null);
+
+  const center = centerState.status === 'success' ? centerState.center : null;
+  const centerLat = center?.lat;
+  const centerLng = center?.lng;
+
+  /** 첫 배치 위치. 캐릭터 id로 정하므로 다시 그리거나 새로고침해도 같은 자리에 선다. */
+  const placed = useMemo(() => {
+    if (centerLat === undefined || centerLng === undefined) return [];
+    const visible = characters.slice(0, MAX_VISIBLE_CHARACTERS);
+    const positions = placeCharacters(
+      { lat: centerLat, lng: centerLng },
+      visible.map((character) => character.id),
+    );
+    return visible.map((character, index) => ({ character, position: positions[index] }));
+  }, [characters, centerLat, centerLng]);
 
   useEffect(() => {
     if (centerState.status === 'error') {
@@ -32,7 +56,10 @@ export default function MapScreen({ neighborhood, characters }: MapScreenProps) 
     }
   }, [centerState]);
 
-  if (centerState.status !== 'success') return null;
+  /** 동네가 바뀌면 Map이 새로 만들어져 INITIAL_LEVEL로 돌아가므로, 만들어질 때도 레벨을 다시 읽는다 */
+  const syncLevel = useCallback((map: kakao.maps.Map) => setLevel(map.getLevel()), []);
+
+  if (!center) return null;
 
   const handleTileLoaded = () => {
     if (loadedFor.current === neighborhood.locationId) return;
@@ -40,22 +67,26 @@ export default function MapScreen({ neighborhood, characters }: MapScreenProps) 
     send({ type: 'mapLoaded' });
   };
 
-  const { center } = centerState;
+  const size = characterSizeAt(level);
 
   return (
-    <Map center={center} level={INITIAL_LEVEL} style={MAP_STYLE} onTileLoaded={handleTileLoaded}>
-      {characters.map((character, index) => (
-        <CustomOverlayMap
-          key={character.id}
-          position={{
-            lat: center.lat,
-            lng: center.lng + (index - (characters.length - 1) / 2) * TEMP_SPACING_LNG,
-          }}
-          yAnchor={1}
-        >
-          <CharacterSprite config={character.config} size={CHARACTER_SIZE} seed={character.id} />
-        </CustomOverlayMap>
-      ))}
+    <Map
+      center={center}
+      level={INITIAL_LEVEL}
+      style={MAP_STYLE}
+      onTileLoaded={handleTileLoaded}
+      onCreate={syncLevel}
+      onZoomChanged={syncLevel}
+    >
+      {size !== null &&
+        placed.map(({ character, position }) => (
+          <CharacterMarker
+            key={character.id}
+            character={character}
+            position={position}
+            size={size}
+          />
+        ))}
     </Map>
   );
 }
