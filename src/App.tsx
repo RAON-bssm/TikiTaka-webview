@@ -1,122 +1,49 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { useKakaoLoader } from 'react-kakao-maps-sdk';
+import type { Neighborhood, ToWeb } from './bridge/bridge';
+import { MOCK_INIT } from './bridge/mock';
+import { isInApp, log, registerReceiver, send } from './bridge/transport';
+import MapScreen from './map/MapScreen';
 
-function App() {
-  const [count, setCount] = useState(0)
+const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+export default function App() {
+  const [loading, error] = useKakaoLoader({ appkey: KAKAO_JS_KEY, libraries: ['services'] });
+  const [neighborhood, setNeighborhood] = useState<Neighborhood | null>(null);
 
-      <div className="ticks"></div>
+  useEffect(() => {
+    if (error) {
+      send({
+        type: 'mapError',
+        code: 'SDK_LOAD_FAILED',
+        message: KAKAO_JS_KEY
+          ? '카카오맵 SDK를 불러오지 못했습니다'
+          : 'VITE_KAKAO_JS_KEY가 없습니다',
+      });
+    }
+  }, [error]);
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+  useEffect(() => {
+    if (loading || error) return;
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    const handle = (message: ToWeb) => {
+      switch (message.type) {
+        case 'init':
+        case 'setNeighborhood':
+          setNeighborhood(message.neighborhood);
+          break;
+        default:
+          // 아직 구현하지 않은 메시지. 모르는 type과 마찬가지로 무시한다.
+          log('info', `미구현 메시지 무시: ${message.type}`);
+      }
+    };
+
+    const unregister = registerReceiver(handle);
+    send({ type: 'ready' });
+    if (!isInApp()) window.__tikitaka?.receive(MOCK_INIT);
+    return unregister;
+  }, [loading, error]);
+
+  if (!neighborhood) return null;
+  return <MapScreen neighborhood={neighborhood} />;
 }
-
-export default App

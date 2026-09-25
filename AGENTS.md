@@ -31,15 +31,15 @@
 
 > 패키지를 추가·업그레이드한 경우 아래 표도 함께 갱신해 주세요. 전체 목록은 `package.json` 참고.
 
-| 패키지                 | 버전       | 비고                        |
-| ---------------------- | ---------- | --------------------------- |
-| `vite`                 | `^8.3.0`   |                             |
-| `@vitejs/plugin-react` | `^6.1.1`   |                             |
-| `react`                | `^19.2.8`  |                             |
-| `react-dom`            | `^19.2.8`  |                             |
-| `typescript`           | `~6.0.2`   |                             |
-| `oxlint`               | `^1.81.0`  |                             |
-| `react-kakao-maps-sdk` | (설치 예정) | M0에서 추가                 |
+| 패키지                 | 버전        | 비고                       |
+| ---------------------- | ----------- | -------------------------- |
+| `vite`                 | `^8.3.0`    |                            |
+| `@vitejs/plugin-react` | `^6.1.1`    |                            |
+| `react`                | `^19.2.8`   |                            |
+| `react-dom`            | `^19.2.8`   |                            |
+| `typescript`           | `~6.0.2`    |                            |
+| `oxlint`               | `^1.81.0`   |                            |
+| `react-kakao-maps-sdk` | (설치 예정) | M0에서 추가                |
 | `zod`                  | (설치 예정) | M1에서 추가, 브리지 검증용 |
 
 ### 명령어
@@ -166,11 +166,11 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 
 ### 7.5 앱 레포와 동기화해야 하는 것
 
-| 웹                        | 앱 (`TikiTaka-app`)                                                 |
-| ------------------------- | ------------------------------------------------------------------- |
-| `src/bridge/bridge.ts`    | 앱의 브리지 메시지 타입 파일                                        |
-| `src/character/layers.ts` | `src/constants/character/types.ts`의 `LAYERS`, 기본 config          |
-| `public/parts/`           | `assets/character/`                                                 |
+| 웹                        | 앱 (`TikiTaka-app`)                                                   |
+| ------------------------- | --------------------------------------------------------------------- |
+| `src/bridge/bridge.ts`    | 앱의 브리지 메시지 타입 파일                                          |
+| `src/character/layers.ts` | `src/constants/character/types.ts`의 `LAYERS`, 기본 config            |
+| `public/parts/`           | `assets/character/`                                                   |
 | `src/styles/tokens.css`   | `src/constants/colors.js`, `tailwind.config.js`의 간격·반경·폰트 크기 |
 
 한쪽을 바꾸면 다른 쪽도 바꿔야 합니다. 앱 레포 파일은 이 레포에서 수정하지 말고, 바뀐 내용을 사용자에게 알려 주세요.
