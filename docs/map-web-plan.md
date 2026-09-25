@@ -159,7 +159,7 @@ OVERSCALE = 1440 / 1024 = 1.40625
   - gray 50 `#F8F9FB` ~ 800 `#1A202C`, 흰색은 `#FFFFFF`
 - 폰트: Pretendard(Regular/Medium/Bold, 본문), **OkDanDan-Bold**(제목·캐릭터 이름 등 강조). 앱 `assets/fonts/`의 파일을 `public/fonts/`에 둔다.
   - OkDanDan(Ok단단체, © OKTICON)은 웹사이트·임베딩 사용 허용, 폰트 파일 수정·재배포 금지다([눈누](https://noonnu.cc/en/font_page/1664)). 그래서 **변환·서브셋 없이 원본 TTF**(458KB)를 쓴다.
-  - Pretendard(OFL, 예약 글꼴 이름 'Pretendard')는 직접 수정한 파일을 쓸 수 없으므로 **공식 동적 서브셋 WOFF2**를 그대로 쓴다. 현재 Medium(500)만 넣었다(말풍선).
+  - Pretendard(OFL, 예약 글꼴 이름 'Pretendard')는 직접 수정한 파일을 쓸 수 없으므로 **공식 동적 서브셋 WOFF2**를 그대로 쓴다. 현재 SemiBold(600)만 넣었다(말풍선).
 - 간격: 4 / 8 / 12 / 16 / 20 / 24 / 40 / 48px. 반경: 4 / 8 / 12 / 16 / 24px.
 
 ---

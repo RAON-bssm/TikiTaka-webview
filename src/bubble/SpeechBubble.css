@@ -9,7 +9,7 @@
   background: var(--color-white);
   color: var(--color-gray-800);
   font-family: var(--font-body);
-  font-weight: 500; /* Pretendard Medium */
+  font-weight: 600; /* Pretendard SemiBold */
   font-size: var(--font-size-sm);
   line-height: var(--line-height-sm);
   /* 카카오 오버레이 컨테이너가 nowrap을 걸어 두므로 되돌려야 줄바꿈된다 */

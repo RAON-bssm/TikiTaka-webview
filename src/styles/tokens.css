@@ -65,7 +65,7 @@
   --font-size-xl: 20px;
   --line-height-xl: 24px;
 
-  /* @font-face는 styles/fonts.css. Pretendard는 Medium(500)만 있다 (말풍선용). 다른 굵기가 필요하면 추가 */
+  /* @font-face는 styles/fonts.css. Pretendard는 SemiBold(600)만 있다 (말풍선용). 다른 굵기가 필요하면 추가 */
   --font-body: 'Pretendard', system-ui, -apple-system, sans-serif;
   --font-title: 'OkDanDan-Bold', 'Pretendard', system-ui, sans-serif;
 }

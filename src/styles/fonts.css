@@ -4,7 +4,7 @@
  * OkDanDan-Bold (Ok단단체, © OKTICON): 웹사이트·임베딩 사용은 허용, 폰트 파일 수정·재배포는 금지.
  * → 앱 assets/fonts/의 원본 TTF를 변환·서브셋 없이 쓴다. https://noonnu.cc/en/font_page/1664
  *
- * Pretendard Medium: styles/pretendard-medium.css (공식 동적 서브셋, 파일 수정 금지)
+ * Pretendard SemiBold: styles/pretendard-semibold.css (공식 동적 서브셋, 파일 수정 금지)
  */
 @font-face {
   font-family: 'OkDanDan-Bold';
