@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useKakaoLoader } from 'react-kakao-maps-sdk';
-import type { Neighborhood, ToWeb } from './bridge/bridge';
+import type { MapCharacter, Neighborhood, ToWeb } from './bridge/bridge';
 import { MOCK_INIT } from './bridge/mock';
 import { isInApp, log, registerReceiver, send } from './bridge/transport';
 import MapScreen from './map/MapScreen';
@@ -10,6 +10,7 @@ const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 export default function App() {
   const [loading, error] = useKakaoLoader({ appkey: KAKAO_JS_KEY, libraries: ['services'] });
   const [neighborhood, setNeighborhood] = useState<Neighborhood | null>(null);
+  const [characters, setCharacters] = useState<MapCharacter[]>([]);
 
   useEffect(() => {
     if (error) {
@@ -31,6 +32,7 @@ export default function App() {
         case 'init':
         case 'setNeighborhood':
           setNeighborhood(message.neighborhood);
+          setCharacters(message.characters);
           break;
         default:
           // 아직 구현하지 않은 메시지. 모르는 type과 마찬가지로 무시한다.
@@ -45,5 +47,5 @@ export default function App() {
   }, [loading, error]);
 
   if (!neighborhood) return null;
-  return <MapScreen neighborhood={neighborhood} />;
+  return <MapScreen neighborhood={neighborhood} characters={characters} />;
 }
