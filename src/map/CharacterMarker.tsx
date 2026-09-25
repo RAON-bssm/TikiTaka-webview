@@ -1,6 +1,6 @@
 import { memo, useRef } from 'react';
 import { CustomOverlayMap } from 'react-kakao-maps-sdk';
-import type { LatLng, MapCharacter } from '../bridge/bridge';
+import type { LatLng, MapCharacter, PartUrlMap } from '../bridge/bridge';
 import { send } from '../bridge/transport';
 import SpeechBubble from '../bubble/SpeechBubble';
 import type { Bubble } from '../bubble/useBubbles';
@@ -29,6 +29,7 @@ interface CharacterMarkerProps {
   /** 캐릭터 한 변(px) */
   size: number;
   bubble?: Bubble;
+  partUrls: PartUrlMap;
 }
 
 /**
@@ -40,6 +41,7 @@ const CharacterMarker = memo(function CharacterMarker({
   position,
   size,
   bubble,
+  partUrls,
 }: CharacterMarkerProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +61,12 @@ const CharacterMarker = memo(function CharacterMarker({
     >
       <div className="character-marker" onClick={handleTap}>
         <div ref={bodyRef}>
-          <CharacterSprite config={character.config} size={size} seed={character.id} />
+          <CharacterSprite
+            config={character.config}
+            size={size}
+            seed={character.id}
+            partUrls={partUrls}
+          />
         </div>
         <span className="character-marker__name">{character.name}</span>
         {bubble && (

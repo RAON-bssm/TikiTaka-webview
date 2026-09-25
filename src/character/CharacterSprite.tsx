@@ -1,5 +1,5 @@
 import { memo, useMemo, type CSSProperties } from 'react';
-import type { CharacterConfig } from '../bridge/bridge';
+import type { CharacterConfig, PartUrlMap } from '../bridge/bridge';
 import { LAYERS, layerKey, type LayerDef } from './layers';
 import { resolvePart } from './resolvePart';
 import './CharacterSprite.css';
@@ -38,23 +38,26 @@ interface CharacterSpriteProps {
   size: number;
   /** 모션 위상을 정하는 값 (보통 캐릭터 id) */
   seed?: string;
+  /** 번들에 없는 파츠의 서버 URL (RN이 init으로 넘긴 값) */
+  partUrls?: PartUrlMap;
 }
 
 const CharacterSprite = memo(function CharacterSprite({
   config,
   size,
   seed = '',
+  partUrls,
 }: CharacterSpriteProps) {
   const runs = useMemo(
     () =>
       MOTION_RUNS.map(({ part, layers }) => ({
         part,
         images: layers.flatMap((layer) => {
-          const src = resolvePart(config, layer);
+          const src = resolvePart(config, layer, partUrls);
           return src ? [{ key: layerKey(layer), src }] : [];
         }),
       })),
-    [config],
+    [config, partUrls],
   );
 
   const style = useMemo(

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Map } from 'react-kakao-maps-sdk';
-import type { MapCharacter, Neighborhood } from '../bridge/bridge';
+import type { MapCharacter, Neighborhood, PartUrlMap } from '../bridge/bridge';
 import { send } from '../bridge/transport';
 import type { Bubble } from '../bubble/useBubbles';
 import CharacterMarker from './CharacterMarker';
@@ -30,9 +30,11 @@ interface MapScreenProps {
   characters: MapCharacter[];
   /** 캐릭터 id → 말풍선 */
   bubbles: Record<string, Bubble>;
+  /** 파츠 경로 키 → 서버 URL (번들에 없는 파츠용) */
+  partUrls: PartUrlMap;
 }
 
-export default function MapScreen({ neighborhood, characters, bubbles }: MapScreenProps) {
+export default function MapScreen({ neighborhood, characters, bubbles, partUrls }: MapScreenProps) {
   const centerState = useNeighborhoodCenter(neighborhood);
   const [level, setLevel] = useState(INITIAL_LEVEL);
   /** mapLoaded는 동네마다 한 번만 보낸다 (타일은 이동할 때마다 다시 로드된다) */
@@ -89,6 +91,7 @@ export default function MapScreen({ neighborhood, characters, bubbles }: MapScre
             position={position}
             size={size}
             bubble={bubbles[character.id]}
+            partUrls={partUrls}
           />
         ))}
     </Map>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useKakaoLoader } from 'react-kakao-maps-sdk';
-import type { MapCharacter, Neighborhood, ToWeb } from './bridge/bridge';
+import type { MapCharacter, Neighborhood, PartUrlMap, ToWeb } from './bridge/bridge';
 import { MOCK_INIT } from './bridge/mock';
 import { isInApp, log, registerReceiver, send } from './bridge/transport';
 import useBubbles from './bubble/useBubbles';
@@ -12,6 +12,8 @@ export default function App() {
   const [loading, error] = useKakaoLoader({ appkey: KAKAO_JS_KEY, libraries: ['services'] });
   const [neighborhood, setNeighborhood] = useState<Neighborhood | null>(null);
   const [characters, setCharacters] = useState<MapCharacter[]>([]);
+  /** init으로만 온다. setNeighborhood에는 없으므로 이전 값을 그대로 쓴다 */
+  const [partUrls, setPartUrls] = useState<PartUrlMap>({});
   const { bubbles, show: showBubble, clear: clearBubbles } = useBubbles();
 
   useEffect(() => {
@@ -32,6 +34,11 @@ export default function App() {
     const handle = (message: ToWeb) => {
       switch (message.type) {
         case 'init':
+          setPartUrls(message.partUrls);
+          setNeighborhood(message.neighborhood);
+          setCharacters(message.characters);
+          clearBubbles();
+          break;
         case 'setNeighborhood':
           setNeighborhood(message.neighborhood);
           setCharacters(message.characters);
@@ -54,5 +61,12 @@ export default function App() {
   }, [loading, error, showBubble, clearBubbles]);
 
   if (!neighborhood) return null;
-  return <MapScreen neighborhood={neighborhood} characters={characters} bubbles={bubbles} />;
+  return (
+    <MapScreen
+      neighborhood={neighborhood}
+      characters={characters}
+      bubbles={bubbles}
+      partUrls={partUrls}
+    />
+  );
 }
