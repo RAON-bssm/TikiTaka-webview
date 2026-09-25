@@ -75,7 +75,7 @@ src/
 ├ main.tsx
 ├ App.tsx                # 브리지 초기화 + MapScreen
 ├ bridge/                # bridge.ts(메시지 타입), transport.ts(수신/전송/검증), mock.ts(단독 실행용)
-├ map/                   # MapScreen, 동네 중심 좌표(geocoder+캐시), 이동 범위 제한
+├ map/                   # MapScreen, 동네 중심 좌표(geocoder+캐시), 캐릭터 이동 허용 영역
 ├ character/             # layers.ts, resolvePart.ts, imageCache.ts, CharacterSprite, RoamingCharacter, useRoaming
 ├ bubble/                # 말풍선
 ├ sticker/               # (M6) 스티커 레이어·편집 모드

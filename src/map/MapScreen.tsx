@@ -4,7 +4,7 @@ import type { Neighborhood } from '../bridge/bridge';
 import { send } from '../bridge/transport';
 import useNeighborhoodCenter from './useNeighborhoodCenter';
 
-/** 초기 줌 레벨(숫자가 작을수록 확대). TODO: 디자인 확인 후 minLevel/maxLevel과 함께 확정 */
+/** 초기 줌 레벨(숫자가 작을수록 확대). TODO: 디자인 확인 후 확정 (캐릭터 숨김 기준 레벨과 함께) */
 const INITIAL_LEVEL = 6;
 
 const MAP_STYLE = { width: '100%', height: '100%' };
