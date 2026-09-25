@@ -63,7 +63,7 @@
   --font-size-xl: 20px;
   --line-height-xl: 24px;
 
-  /* TODO(M2): public/fonts/에 Pretendard, OkDanDan-Bold 웹폰트 추가 후 @font-face 선언 */
+  /* OkDanDan-Bold는 styles/fonts.css에서 선언. TODO: 본문 글자가 생기면 Pretendard 추가 (파일이 커서 필요할 때만) */
   --font-body: 'Pretendard', system-ui, -apple-system, sans-serif;
   --font-title: 'OkDanDan-Bold', 'Pretendard', system-ui, sans-serif;
 }

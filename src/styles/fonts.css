@@ -1,0 +1,14 @@
+/*
+ * 웹폰트. 파일은 public/fonts/에 앱(assets/fonts/)과 같은 원본을 그대로 둔다.
+ *
+ * OkDanDan-Bold (Ok단단체, © OKTICON): 웹사이트·임베딩 사용은 허용, 폰트 파일 수정·재배포는 금지.
+ * → WOFF2 변환이나 서브셋 없이 원본 TTF를 쓴다. https://noonnu.cc/en/font_page/1664
+ */
+@font-face {
+  font-family: 'OkDanDan-Bold';
+  src: url('/fonts/OkDanDan-Bold.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  /* 폰트가 늦게 와도 이름표를 먼저 대체 폰트로 보여 준다 */
+  font-display: swap;
+}
