@@ -1,0 +1,88 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# CodeRabbit 설정 — TikiTaka-webview
+# 프로젝트 규약은 AGENTS.md 를 따릅니다. 아래 path_instructions 는 그 규약을 리뷰에 반영하기 위한 요약입니다.
+
+language: ko-KR # 리뷰/요약을 한국어로 작성
+
+reviews:
+  profile: chill # 사소한 지적보다 중요한 이슈 위주
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: false
+  changed_files_summary: true
+  sequence_diagrams: true
+  poem: false
+
+  auto_review:
+    enabled: true
+    drafts: false # Draft PR 은 리뷰하지 않음
+    base_branches:
+      - main
+
+  # 리뷰 대상에서 제외할 경로 (자동 생성물 · 에셋 · 락파일)
+  path_filters:
+    - '!**/node_modules/**'
+    - '!dist/**'
+    - '!public/**'
+    - '!pnpm-lock.yaml'
+    - '!src/parts/manifest.ts'
+
+  # 경로별 리뷰 지침 (AGENTS.md 규약 기반)
+  path_instructions:
+    - path: '**/*.{ts,tsx}'
+      instructions: |
+        - 컴포넌트 선언은 `export default function Name() {}` 형태로 통일한다.
+          예외: memo/forwardRef 로 감싸는 경우, 파일 내부 전용 소형 헬퍼 컴포넌트.
+        - 함수형 컴포넌트/훅과 명확한 TypeScript 타입/인터페이스를 사용한다. `any` 지양.
+          브리지 메시지·localStorage 등 외부 입력은 unknown 으로 받고 검증 후 사용한다.
+        - 웹은 백엔드 API 를 직접 호출하지 않는다. fetch/axios 로 서버를 부르는 코드가 있으면 지적한다.
+        - 웹 안에 고정 UI(헤더, 버튼, 토스트)를 두지 않는다. 지도 위 오버레이(캐릭터·말풍선·스티커)만 그린다.
+        - localStorage 접근은 try/catch 로 감싼다.
+        - 동네를 동네명만으로 식별하지 않는다('북구'가 여러 시/도에 있음). locationId 또는 시/도+동네를 쓴다.
+        - 기존 주석/Docstring 을 훼손하지 않고 보존한다.
+    - path: 'src/bridge/**/*.ts'
+      instructions: |
+        - 메시지는 `{ v: 1, type, ... }` 형태이며, 모르는 type 은 에러 없이 무시해야 한다(앱과 배포 시점이 다름).
+        - 수신 메시지는 런타임 검증 후 사용하고, 잘못된 메시지는 무시한 뒤 log 로 알린다.
+        - bridge.ts 는 앱 레포와 같은 내용을 유지해야 한다. 변경 시 PR 에 앱 레포 반영 여부가 적혀 있는지 확인한다.
+        - window.__tikitaka / ReactNativeWebView 접근은 transport.ts 에만 둔다.
+    - path: 'src/character/**/*.{ts,tsx}'
+      instructions: |
+        - 캐릭터는 CharacterConfig(파츠 id JSON)로 표현하고 파츠 이미지를 겹쳐 합성한다.
+        - 레이어 순서는 layers.ts 의 LAYERS 배열로만 관리하며 앱과 같아야 한다.
+          머리 하이라이트는 눈 색(eyesColor)을 따른다.
+        - 레이어 박스 기하(top/left -20.3125%, 140.625%)를 임의로 바꾸지 않는다.
+        - 파츠 해석 순서: manifest → partUrls → 기본 config 폴백 → 건너뜀. 옵셔널 슬롯이 비어 있으면 폴백하지 않는다.
+        - 서버 파츠 URL 은 HTTPS 공개 URL 이어야 한다(HTTP 는 혼합 콘텐츠, presigned 는 만료).
+        - 위치 갱신은 rAF 안에서 10~15fps 로 제한하고, 애니메이션은 transform/opacity 만 바꾼다.
+    - path: '**/*.css'
+      instructions: |
+        - 색상/간격/반경/폰트 크기는 src/styles/tokens.css 의 CSS 변수를 사용한다. hex·px 임의값을 지양한다.
+        - 라이트 모드 고정. 다크 모드 스타일을 추가하지 않는다.
+    - path: '**/package.json'
+      instructions: |
+        - 패키지 매니저는 pnpm 만 사용한다(npm/yarn/bun 금지). `packageManager` 필드를 유지한다.
+        - 외부 스크립트/CDN 의존성은 카카오 SDK 외에 추가하지 않는다. 큰 라이브러리 추가는 번들 크기를 확인한다.
+
+  tools:
+    oxc:
+      enabled: true # 프로젝트 oxlint(.oxlintrc.json) 규칙 반영
+    yamllint:
+      enabled: true
+    markdownlint:
+      enabled: true
+    gitleaks:
+      enabled: true # 커밋에 유출된 시크릿 검사
+    actionlint:
+      enabled: true # GitHub Actions 워크플로 검사
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: auto
+  issues:
+    scope: auto

@@ -1,4 +1,6 @@
-dist
-node_modules
+node_modules/
+dist/
+public/
+.husky/_/
+*.lock
 pnpm-lock.yaml
-public

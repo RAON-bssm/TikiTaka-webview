@@ -218,3 +218,17 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - 계획 문서 **11장(미결 사항)** 에 걸린 부분(파츠 카탈로그 스키마, 경계 데이터 등)은 추측해서 구현하지 말고 사용자에게 확인합니다.
 - 결정 사항이 바뀌거나 새로 확정되면 `docs/map-web-plan.md`와 이 문서를 함께 갱신합니다.
 - 변경 후 `pnpm dev`로 브라우저(모바일 화면 크기)에서 목 브리지 동작을 확인합니다. 실기기에서만 확인 가능한 부분(WebView 동작, 프레임)은 확인하지 못했다고 명시합니다.
+
+---
+
+## 11. 커밋 · 브랜치 · PR 규칙 (Git Convention)
+
+앱 레포와 같은 규칙을 씁니다. 태그 표는 `README.md` 참고.
+
+- **커밋 메시지:** `태그:: 설명` (소문자 태그, 콜론 두 개, 한국어 설명). 예: `feat:: 지도 WebView 브리지 수신 함수 등록`, `chore:: zod 설치`
+  - 태그: `feat`, `fix`, `style`, `design`, `refactor`, `docs`, `chore`
+  - 한 커밋에는 한 가지 변경만 담습니다.
+- **브랜치:** `feat/TK-<이슈번호>` 형식으로 `main`에서 따고, PR로 `main`에 머지합니다.
+- **PR:** `.github/PULL_REQUEST_TEMPLATE.md` 양식을 채웁니다. 브리지 메시지를 바꿨다면 "브리지 변경" 칸에 앱 레포 PR을 연결합니다.
+- **커밋 전 검사:** Husky `pre-commit`이 lint-staged로 oxlint(`--fix`)와 Prettier를 돌립니다. 훅을 건너뛰지(`--no-verify`) 마세요.
+- 커밋·push는 사용자가 요청할 때만 합니다.

@@ -9,7 +9,10 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "husky",
+    "typecheck": "tsc -b",
+    "lint:fix": "oxlint --fix"
   },
   "dependencies": {
     "react": "^19.2.8",
@@ -22,10 +25,22 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "husky": "^9.1.7",
     "kakao.maps.d.ts": "^0.1.40",
+    "lint-staged": "^17.5.1",
     "oxlint": "^1.81.0",
     "prettier": "^3.9.9",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
+  },
+  "packageManager": "pnpm@11.7.0",
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "oxlint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,html,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }
