@@ -1,4 +1,4 @@
-import { memo, useRef } from 'react';
+import { memo, useRef, type KeyboardEvent } from 'react';
 import { CustomOverlayMap } from 'react-kakao-maps-sdk';
 import type { LatLng, MapCharacter, PartUrlMap } from '../bridge/bridge';
 import { send } from '../bridge/transport';
@@ -52,6 +52,13 @@ const CharacterMarker = memo(function CharacterMarker({
     send({ type: 'characterTap', characterId: character.id });
   };
 
+  /** 키보드·스크린리더 사용자도 누를 수 있게 버튼처럼 Enter/Space에 반응한다 */
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    handleTap();
+  };
+
   return (
     <CustomOverlayMap
       position={position}
@@ -59,8 +66,17 @@ const CharacterMarker = memo(function CharacterMarker({
       zIndex={zIndexFor(position.lat) + (bubble ? BUBBLE_Z_OFFSET : 0)}
       clickable
     >
-      <div className="character-marker" onClick={handleTap}>
-        <div ref={bodyRef}>
+      <div className="character-marker">
+        {/* <button> 안에는 div를 넣을 수 없어 role로 버튼 역할을 준다. 말풍선은 읽히도록 버튼 밖에 둔다 */}
+        <div
+          ref={bodyRef}
+          className="character-marker__body"
+          role="button"
+          tabIndex={0}
+          aria-label={character.name}
+          onClick={handleTap}
+          onKeyDown={handleKeyDown}
+        >
           <CharacterSprite
             config={character.config}
             size={size}
@@ -68,7 +84,10 @@ const CharacterMarker = memo(function CharacterMarker({
             partUrls={partUrls}
           />
         </div>
-        <span className="character-marker__name">{character.name}</span>
+        {/* 이름은 버튼의 aria-label로 읽으므로 이름표는 스크린리더에서 숨긴다 */}
+        <span className="character-marker__name" aria-hidden="true">
+          {character.name}
+        </span>
         {bubble && (
           <div className="character-marker__bubble">
             <SpeechBubble key={bubble.id} text={bubble.text} />

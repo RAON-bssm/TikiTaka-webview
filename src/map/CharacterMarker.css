@@ -1,5 +1,8 @@
 .character-marker {
   position: relative;
+}
+
+.character-marker__body {
   cursor: pointer;
 }
 
