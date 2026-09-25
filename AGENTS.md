@@ -81,6 +81,7 @@ src/
 ├ character/             # layers.ts, resolvePart.ts, imageCache.ts, CharacterSprite, RoamingCharacter, useRoaming
 ├ bubble/                # 말풍선
 ├ sticker/               # (M6) 스티커 레이어·편집 모드
+├ dev/                   # 개발 전용 화면 (예: SpritePreview, `pnpm dev`에서 `/?sprite`). 운영 번들에 들어가지 않게 `import.meta.env.DEV`로 막는다
 ├ parts/manifest.ts      # 번들 파츠 경로 목록 (자동 생성)
 └ styles/tokens.css      # 디자인 토큰 (앱 colors.js 값)
 docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
@@ -149,6 +150,7 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - 모든 파츠는 **1440×1440 투명 WebP**이며 정위치에 그려져 있습니다. 같은 크기로 겹치기만 하면 정렬됩니다.
 - 정사각형 컨테이너 안에 레이어 박스를 `position: absolute; top/left: -20.3125%; width/height: 140.625%`로 두고, 각 `<img>`는 박스를 꽉 채웁니다(`object-fit: contain`). 헤어가 넘칠 수 있으므로 `overflow`는 보이게 둡니다.
 - 이 상수(`OVERSCALE = 1440 / 1024`)를 임의로 바꾸지 마세요. 앱과 크기가 달라집니다.
+- **대기 모션(웹 전용):** 레이어를 순서대로 둔 채 머리/몸 묶음으로 나눠, 몸은 발끝 기준으로 살짝 늘었다 줄고 머리는 따라 오르내립니다(`CharacterSprite.css`). 뒷머리·악세서리·하이라이트는 머리, 몸·코스튬은 몸을 따릅니다. `transform`만 쓰고, 캐릭터마다 id로 시작 시점을 달리합니다. 앱 `LAYERS`에는 이 구분을 넣지 않습니다.
 
 ### 7.3 파츠 해석 (하이브리드)
 
