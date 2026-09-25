@@ -22,7 +22,7 @@
 
 - **빌드/런타임:** Vite + React + TypeScript (SPA, SSR 없음)
 - **지도:** 카카오맵 JavaScript API + [`react-kakao-maps-sdk`](https://github.com/JaeSeoKim/react-kakao-maps-sdk)
-- **메시지 검증:** `zod`
+- **메시지 검증:** `zod` (번들 크기 때문에 `zod/mini`로 import)
 - **린트:** oxlint (`.oxlintrc.json`)
 - **패키지 매니저:** **pnpm** (절대 `npm`, `yarn`, `bun`을 사용하지 마세요)
 - **배포:** Vercel (고정 도메인). `main`에 push하면 배포됩니다.
@@ -31,16 +31,16 @@
 
 > 패키지를 추가·업그레이드한 경우 아래 표도 함께 갱신해 주세요. 전체 목록은 `package.json` 참고.
 
-| 패키지                 | 버전        | 비고                       |
-| ---------------------- | ----------- | -------------------------- |
-| `vite`                 | `^8.3.0`    |                            |
-| `@vitejs/plugin-react` | `^6.1.1`    |                            |
-| `react`                | `^19.2.8`   |                            |
-| `react-dom`            | `^19.2.8`   |                            |
-| `typescript`           | `~6.0.2`    |                            |
-| `oxlint`               | `^1.81.0`   |                            |
-| `react-kakao-maps-sdk` | (설치 예정) | M0에서 추가                |
-| `zod`                  | (설치 예정) | M1에서 추가, 브리지 검증용 |
+| 패키지                 | 버전      | 비고                      |
+| ---------------------- | --------- | ------------------------- |
+| `vite`                 | `^8.3.0`  |                           |
+| `@vitejs/plugin-react` | `^6.1.1`  |                           |
+| `react`                | `^19.2.8` |                           |
+| `react-dom`            | `^19.2.8` |                           |
+| `typescript`           | `~6.0.2`  |                           |
+| `oxlint`               | `^1.81.0` |                           |
+| `react-kakao-maps-sdk` | `^1.2.2`  |                           |
+| `zod`                  | `^4.6.5`  | 브리지 검증용, `zod/mini` |
 
 ### 명령어
 
@@ -74,7 +74,7 @@ public/
 src/
 ├ main.tsx
 ├ App.tsx                # 브리지 초기화 + MapScreen
-├ bridge/                # bridge.ts(메시지 타입), transport.ts(수신/전송/검증), mock.ts(단독 실행용)
+├ bridge/                # bridge.ts(메시지 타입), schema.ts(zod 스키마), transport.ts(수신/전송), mock.ts(단독 실행용)
 ├ map/                   # MapScreen, 동네 중심 좌표(geocoder+캐시), 캐릭터 이동 허용 영역
 ├ character/             # layers.ts, resolvePart.ts, imageCache.ts, CharacterSprite, RoamingCharacter, useRoaming
 ├ bubble/                # 말풍선
@@ -112,6 +112,8 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - 모든 메시지는 `{ v: 1, type: string, ... }` 형태입니다.
   - **모르는 `type`은 조용히 무시합니다.** 앱과 웹의 배포 시점이 다르기 때문입니다. 에러를 던지지 마세요.
   - 받은 메시지는 **`zod`로 런타임 검증**하고, 형식이 잘못되면 무시한 뒤 `log`(level `warn`) 메시지로 RN에 알립니다.
+  - 스키마는 `src/bridge/schema.ts`에 있고, 타입의 원본은 `bridge.ts`입니다. 둘이 어긋나면 타입 검사(`SchemaMatchesToWeb`)로 빌드가 실패하므로, 메시지를 바꾸면 **두 파일을 같이** 고칩니다.
+  - 객체의 모르는 필드는 버립니다(에러 아님). 앱이 필드를 먼저 추가해도 깨지지 않게 하기 위해서입니다.
   - 규약에 호환되지 않는 변경이 생기면 `v`를 올립니다.
 - **수명 주기:** SDK 로드 → `receive` 등록 → `ready` 전송 → `init` 수신 → 지도·캐릭터 렌더 → `mapLoaded` 전송. 실패하면 `mapError`(`SDK_LOAD_FAILED` / `GEOCODE_FAILED` / `UNKNOWN`)를 보냅니다.
   - WebView가 재로드되면 이 과정 전체가 다시 실행됩니다. 전역 상태가 한 번만 초기화된다고 가정하지 마세요.

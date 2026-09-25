@@ -1,4 +1,5 @@
 import type { ToRN, ToWeb } from './bridge';
+import { isKnownType, parseToWeb } from './schema';
 
 declare global {
   interface Window {
@@ -31,7 +32,9 @@ export function log(level: 'info' | 'warn' | 'error', message: string): void {
 
 /**
  * RN → 웹 수신 함수를 등록한다. 반환값을 호출하면 해제된다.
- * TODO(M1): zod 스키마로 메시지 전체를 검증한다. 지금은 공통 형태({ v: 1, type })만 확인한다.
+ * 검증을 통과한 메시지만 handler로 넘긴다.
+ * - 모르는 type: 조용히 무시 (앱이 웹보다 먼저 배포될 수 있다)
+ * - 형식 오류·다른 버전: 무시하고 log(warn)로 RN에 알린다
  */
 export function registerReceiver(handler: (message: ToWeb) => void): () => void {
   const receive = (raw: unknown) => {
@@ -52,7 +55,13 @@ export function registerReceiver(handler: (message: ToWeb) => void): () => void 
       log('warn', `지원하지 않는 버전(v=${String(message.v)})의 메시지를 무시했습니다`);
       return;
     }
-    handler(message as ToWeb);
+    if (!isKnownType(message.type)) return;
+    const parsed = parseToWeb(message);
+    if (!parsed.ok) {
+      log('warn', `형식이 잘못된 '${message.type}' 메시지를 무시했습니다: ${parsed.reason}`);
+      return;
+    }
+    handler(parsed.message);
   };
 
   window.__tikitaka = { receive };

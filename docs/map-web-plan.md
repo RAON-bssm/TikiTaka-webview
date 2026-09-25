@@ -260,7 +260,7 @@ RN: 로딩 UI 해제
 
 - **`ready` 전에 RN이 보낸 메시지는 유실된다.** RN은 `ready`를 받기 전까지 보내지 않는다.
 - WebView가 재로드되면(메모리 부족으로 인한 프로세스 종료 포함) `ready`가 다시 오므로, RN은 그때마다 `init`을 다시 보낸다.
-- 웹은 받은 메시지를 런타임에 검증한다(`zod` 등). 형식이 잘못되면 무시하고 `log`로 알린다.
+- 웹은 받은 메시지를 런타임에 검증한다(`zod/mini`, `src/bridge/schema.ts`). 형식이 잘못되면 메시지 전체를 무시하고 `log`(warn)로 오류 위치를 알린다. 모르는 `type`은 로그 없이 무시하고, 객체의 모르는 필드는 버린다.
 
 ---
 
@@ -380,7 +380,8 @@ tikitaka-map/
 │  ├ App.tsx                # 브리지 초기화 + MapScreen
 │  ├ bridge/
 │  │  ├ bridge.ts           # 메시지 타입 (앱과 동일 내용 유지)
-│  │  ├ transport.ts        # receive 등록, postMessage 래퍼, 검증
+│  │  ├ schema.ts           # 수신 메시지 zod 스키마 (bridge.ts 타입과 일치 검사)
+│  │  ├ transport.ts        # receive 등록, postMessage 래퍼
 │  │  └ mock.ts             # 브라우저 단독 실행용 목 init
 │  ├ map/
 │  │  ├ MapScreen.tsx
