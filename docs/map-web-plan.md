@@ -159,7 +159,7 @@ OVERSCALE = 1440 / 1024 = 1.40625
   - gray 50 `#F8F9FB` ~ 800 `#1A202C`, 흰색은 `#FFFFFF`
 - 폰트: Pretendard(Regular/Medium/Bold, 본문), **OkDanDan-Bold**(제목·캐릭터 이름 등 강조). 앱 `assets/fonts/`의 파일을 `public/fonts/`에 둔다.
   - OkDanDan(Ok단단체, © OKTICON)은 웹사이트·임베딩 사용 허용, 폰트 파일 수정·재배포 금지다([눈누](https://noonnu.cc/en/font_page/1664)). 그래서 **변환·서브셋 없이 원본 TTF**(458KB)를 쓴다.
-  - Pretendard(OFL)는 본문 글자가 생길 때 WOFF2로 변환·서브셋해 추가한다.
+  - Pretendard(OFL, 예약 글꼴 이름 'Pretendard')는 직접 수정한 파일을 쓸 수 없으므로 **공식 동적 서브셋 WOFF2**를 그대로 쓴다. 현재 Medium(500)만 넣었다(말풍선).
 - 간격: 4 / 8 / 12 / 16 / 20 / 24 / 40 / 48px. 반경: 4 / 8 / 12 / 16 / 24px.
 
 ---
@@ -344,12 +344,19 @@ key = 위 규칙으로 생성
   - 화면 밖 캐릭터는 이동 계산만 하고 DOM은 갱신하지 않거나 정지
   - `document.visibilityState`가 hidden이면 전체 정지(탭 전환이나 백그라운드 시)
 - 캐릭터를 탭하면 걷기를 멈추고 살짝 튀는 애니메이션 → `characterTap` 전송. 챗봇 UI는 RN이 띄운다.
+  - 탭과 튀는 모션(Web Animations API, `transform`만)은 구현됨. 걷기 멈춤은 돌아다니기와 함께 한다.
 
 ### 6.4 말풍선
 
 - `showBubble`을 받으면 캐릭터 머리 위에 표시하고, `durationMs`(기본 4초) 후 사라진다.
 - 긴 텍스트는 2줄에서 말줄임한다. 전체 대화는 RN 챗봇 화면의 몫이다.
 - 한 캐릭터에 새 말풍선이 오면 이전 것을 교체한다.
+- 구현 메모
+  - 타이머는 마커가 아니라 `useBubbles`에 둔다. 줌아웃으로 캐릭터가 숨어 있어도 시간이 되면 사라진다.
+  - 말풍선이 뜬 캐릭터는 다른 캐릭터보다 앞에 그린다(`zIndex`를 올린다).
+  - 화면에 없는 캐릭터 id의 말풍선은 그리지 않고, 시간이 되면 지운다. `init`/`setNeighborhood`를 받으면 모두 지운다.
+  - 카카오 오버레이 컨테이너가 `white-space: nowrap`을 걸어 두므로 말풍선에서 `normal`로 되돌린다.
+  - 모양은 디자인이 없어 흰 둥근 상자 + 꼬리로 임시 구현했다(11장 #9).
 
 ### 6.5 스티커 꾸미기 (마일스톤 M6, 추후)
 
@@ -401,7 +408,7 @@ tikitaka-map/
 │  │  ├ CharacterSprite.tsx
 │  │  ├ RoamingCharacter.tsx
 │  │  └ useRoaming.ts       # 이동 상태 머신
-│  ├ bubble/SpeechBubble.tsx
+│  ├ bubble/               # SpeechBubble.tsx, useBubbles.ts (캐릭터별 말풍선 + 타이머)
 │  ├ sticker/               # M6
 │  ├ parts/manifest.ts      # 번들된 파츠 경로 목록 (스크립트로 생성)
 │  └ styles/tokens.css      # 앱 colors.js 값

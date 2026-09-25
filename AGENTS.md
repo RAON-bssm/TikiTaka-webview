@@ -71,7 +71,7 @@ pnpm gen:manifest  # public/parts → src/parts/manifest.ts 재생성
 ```
 public/
 ├ parts/                 # 기본 캐릭터 파츠 (앱 assets/character와 같은 구조)
-└ fonts/                 # OkDanDan-Bold (앱과 같은 원본 TTF). Pretendard는 본문 글자가 생기면 추가
+└ fonts/                 # OkDanDan-Bold (앱과 같은 원본 TTF), pretendard/ (공식 Medium 동적 서브셋 + LICENSE)
 scripts/gen-manifest.mjs # public/parts → src/parts/manifest.ts
 src/
 ├ main.tsx
@@ -79,7 +79,7 @@ src/
 ├ bridge/                # bridge.ts(메시지 타입), schema.ts(zod 스키마), transport.ts(수신/전송), mock.ts(단독 실행용)
 ├ map/                   # MapScreen, CharacterMarker(캐릭터+이름표 오버레이), 동네 중심 좌표(geocoder+캐시), bounds(캐릭터 이동 허용 영역), placement(첫 배치)
 ├ character/             # layers.ts, resolvePart.ts, imageCache.ts, CharacterSprite, RoamingCharacter, useRoaming
-├ bubble/                # 말풍선
+├ bubble/                # SpeechBubble, useBubbles(캐릭터별 말풍선 + 사라지는 타이머)
 ├ sticker/               # (M6) 스티커 레이어·편집 모드
 ├ dev/                   # 개발 전용 화면 (예: SpritePreview, `pnpm dev`에서 `/?sprite`). 운영 번들에 들어가지 않게 `import.meta.env.DEV`로 막는다
 ├ parts/manifest.ts      # 번들 파츠 경로 목록 (자동 생성)
@@ -194,7 +194,8 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - **반경:** `xs` 4 / `sm` 8 / `md` 12 / `lg` 16 / `xl` 24 / `full` 9999 (px)
 - **폰트:** Pretendard(Regular/Medium/Bold, 본문), OkDanDan-Bold(캐릭터 이름표·강조). 앱 `assets/fonts/`의 파일을 `public/fonts/`에 두고 `src/styles/fonts.css`에서 선언합니다.
   - **OkDanDan(Ok단단체)은 웹 사용·임베딩은 되지만 폰트 파일 수정·재배포가 금지**입니다. WOFF2 변환이나 서브셋을 하지 말고 원본 TTF를 그대로 씁니다.
-  - Pretendard는 파일이 커서(굵기당 약 2.7MB) 본문 글자가 실제로 생길 때 추가합니다. OFL이라 WOFF2 변환·서브셋이 가능합니다.
+  - **Pretendard는 `'Pretendard'`가 예약 글꼴 이름(OFL)이라, 직접 변환·서브셋한 파일을 이 이름으로 쓰면 안 됩니다.** npm `pretendard` 패키지의 공식 동적 서브셋(`dist/web/static/woff2-dynamic-subset/`, 굵기당 92조각)을 그대로 복사하고, `src/styles/pretendard-medium.css`에서 경로만 바꿔 선언합니다. 화면에 나온 글자가 든 조각만 받습니다.
+  - 지금은 Medium(500, 말풍선)만 있습니다. 다른 굵기가 필요하면 같은 방법으로 추가합니다.
 - 지도 로드 전 배경은 `gray-50`(`#F8F9FB`)입니다. 흰 화면이 번쩍이지 않게 `html`, `body`, `#root`에 지정합니다.
 
 ---
