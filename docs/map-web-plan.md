@@ -396,12 +396,12 @@ tikitaka-map/
 │  │  └ useRoaming.ts       # 이동 상태 머신
 │  ├ bubble/SpeechBubble.tsx
 │  ├ sticker/               # M6
-│  ├ parts/manifest.ts      # 번들된 파츠 경로 목록 (스크립트로 생성 권장)
+│  ├ parts/manifest.ts      # 번들된 파츠 경로 목록 (스크립트로 생성)
 │  └ styles/tokens.css      # 앱 colors.js 값
 └ .env.example              # VITE_KAKAO_JS_KEY=
 ```
 
-- `manifest.ts`는 `public/parts`를 읽어 만드는 스크립트(`pnpm gen:manifest`)로 생성해 수동 누락을 막는다.
+- `manifest.ts`는 `public/parts`를 읽어 만드는 스크립트(`pnpm gen:manifest`, `scripts/gen-manifest.mjs`)로 생성해 수동 누락을 막는다. `pnpm build`가 `--check`로 최신인지 확인한다.
 - 앱과 복사해서 맞춰야 하는 파일은 `bridge.ts`, `layers.ts`, `public/parts/`, `tokens.css`다. 파일 상단에 "앱 레포와 동기화 필요"를 명시한다.
 
 ---
