@@ -1,4 +1,5 @@
 import * as z from 'zod/mini';
+import type * as Bridge from './bridge';
 import type { ToWeb } from './bridge';
 
 // RN → 웹 메시지(ToWeb)의 런타임 검증 스키마. 타입의 원본은 bridge.ts이며,
@@ -82,12 +83,26 @@ const ToWebSchema = z.discriminatedUnion('type', [
   z.object({ v, type: z.literal('setEditMode'), enabled: z.boolean() }),
 ]);
 
-// 스키마와 bridge.ts 타입이 서로 대입 가능해야 한다. 메시지를 추가·변경했다면 양쪽을 같이 고친다.
+// 스키마와 bridge.ts 타입이 일치해야 한다. 메시지를 추가·변경했다면 양쪽을 같이 고친다.
 type Parsed = z.infer<typeof ToWebSchema>;
 type Assert<T extends true> = T;
-export type SchemaMatchesToWeb = Assert<
-  [Parsed] extends [ToWeb] ? ([ToWeb] extends [Parsed] ? true : false) : false
->;
+type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
+/** 서로 대입 가능하고 키 목록도 같아야 한다. 옵셔널 키는 빠뜨려도 대입이 되므로 키를 따로 비교한다. */
+type Matches<A, B> = Same<A, B> extends true ? Same<keyof A, keyof B> : false;
+/** 메시지 type마다 따로 비교한다 (유니온 전체로 비교하면 variant의 빠진 키를 못 잡는다) */
+type VariantMatches = {
+  [K in ToWeb['type']]: Matches<Extract<Parsed, { type: K }>, Extract<ToWeb, { type: K }>>;
+};
+export type SchemaMatchesToWeb = [
+  Assert<Same<Parsed['type'], ToWeb['type']>>,
+  Assert<false extends VariantMatches[ToWeb['type']] ? false : true>,
+  // 안쪽 객체의 옵셔널 키(center, clothing 등)도 같은 방식으로 비교한다
+  Assert<Matches<z.infer<typeof LatLng>, Bridge.LatLng>>,
+  Assert<Matches<z.infer<typeof CharacterConfig>, Bridge.CharacterConfig>>,
+  Assert<Matches<z.infer<typeof MapCharacter>, Bridge.MapCharacter>>,
+  Assert<Matches<z.infer<typeof Neighborhood>, Bridge.Neighborhood>>,
+  Assert<Matches<z.infer<typeof PlacedSticker>, Bridge.PlacedSticker>>,
+];
 
 const KNOWN_TYPES: ReadonlySet<string> = new Set(
   ToWebSchema.def.options.map((option) => option.shape.type.def.values[0] as string),
