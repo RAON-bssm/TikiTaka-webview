@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Map } from 'react-kakao-maps-sdk';
 import type { MapCharacter, Neighborhood } from '../bridge/bridge';
 import { send } from '../bridge/transport';
+import type { Bubble } from '../bubble/useBubbles';
 import CharacterMarker from './CharacterMarker';
 import { placeCharacters } from './placement';
 import useNeighborhoodCenter from './useNeighborhoodCenter';
@@ -27,9 +28,11 @@ function characterSizeAt(level: number): number | null {
 interface MapScreenProps {
   neighborhood: Neighborhood;
   characters: MapCharacter[];
+  /** 캐릭터 id → 말풍선 */
+  bubbles: Record<string, Bubble>;
 }
 
-export default function MapScreen({ neighborhood, characters }: MapScreenProps) {
+export default function MapScreen({ neighborhood, characters, bubbles }: MapScreenProps) {
   const centerState = useNeighborhoodCenter(neighborhood);
   const [level, setLevel] = useState(INITIAL_LEVEL);
   /** mapLoaded는 동네마다 한 번만 보낸다 (타일은 이동할 때마다 다시 로드된다) */
@@ -85,6 +88,7 @@ export default function MapScreen({ neighborhood, characters }: MapScreenProps) 
             character={character}
             position={position}
             size={size}
+            bubble={bubbles[character.id]}
           />
         ))}
     </Map>

@@ -3,6 +3,7 @@ import { useKakaoLoader } from 'react-kakao-maps-sdk';
 import type { MapCharacter, Neighborhood, ToWeb } from './bridge/bridge';
 import { MOCK_INIT } from './bridge/mock';
 import { isInApp, log, registerReceiver, send } from './bridge/transport';
+import useBubbles from './bubble/useBubbles';
 import MapScreen from './map/MapScreen';
 
 const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
@@ -11,6 +12,7 @@ export default function App() {
   const [loading, error] = useKakaoLoader({ appkey: KAKAO_JS_KEY, libraries: ['services'] });
   const [neighborhood, setNeighborhood] = useState<Neighborhood | null>(null);
   const [characters, setCharacters] = useState<MapCharacter[]>([]);
+  const { bubbles, show: showBubble, clear: clearBubbles } = useBubbles();
 
   useEffect(() => {
     if (error) {
@@ -33,6 +35,11 @@ export default function App() {
         case 'setNeighborhood':
           setNeighborhood(message.neighborhood);
           setCharacters(message.characters);
+          clearBubbles();
+          break;
+        case 'showBubble':
+          // 지금 없는 캐릭터의 말풍선은 그려지지 않고 시간이 되면 사라진다
+          showBubble(message.characterId, message.text, message.durationMs);
           break;
         default:
           // 아직 구현하지 않은 메시지. 모르는 type과 마찬가지로 무시한다.
@@ -44,8 +51,8 @@ export default function App() {
     send({ type: 'ready' });
     if (!isInApp()) window.__tikitaka?.receive(MOCK_INIT);
     return unregister;
-  }, [loading, error]);
+  }, [loading, error, showBubble, clearBubbles]);
 
   if (!neighborhood) return null;
-  return <MapScreen neighborhood={neighborhood} characters={characters} />;
+  return <MapScreen neighborhood={neighborhood} characters={characters} bubbles={bubbles} />;
 }
