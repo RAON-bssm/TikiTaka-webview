@@ -11,11 +11,10 @@
   left: 50%;
   transform: translateX(-50%);
   max-width: 8em;
-  padding: var(--space-xs) var(--space-sm);
-  border: 1px solid var(--color-gray-200);
-  border-radius: var(--radius-full);
-  background: var(--color-white);
-  color: var(--color-gray-800);
+  padding: var(--space-xs);
+  border-radius: var(--radius-xs);
+  background: rgb(var(--color-gray-800-rgb) / 60%);
+  color: var(--color-white);
   font-family: var(--font-title);
   font-size: var(--font-size-xs);
   line-height: var(--line-height-xs);

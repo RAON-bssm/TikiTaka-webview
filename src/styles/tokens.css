@@ -13,6 +13,8 @@
   --color-gray-600: #4a5568;
   --color-gray-700: #2d3748;
   --color-gray-800: #1a202c;
+  /* 반투명이 필요할 때: rgb(var(--color-gray-800-rgb) / 60%). 값은 --color-gray-800과 같아야 한다 */
+  --color-gray-800-rgb: 26 32 44;
 
   --color-primary-100: #fff3ee;
   --color-primary-200: #fed8ca;
