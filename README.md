@@ -75,7 +75,8 @@ pnpm dev   # http://localhost:5173
 ## 주요 명령어 (Scripts)
 
 - `pnpm dev`: 로컬 개발 서버 실행
-- `pnpm build`: 타입 검사 + 프로덕션 빌드
+- `pnpm build`: manifest 최신 확인 + 타입 검사 + 프로덕션 빌드
+- `pnpm gen:manifest`: `public/parts`의 파츠 목록으로 `src/parts/manifest.ts` 재생성
 - `pnpm preview`: 빌드 결과 확인
 - `pnpm typecheck`: TypeScript 타입 검사
 - `pnpm lint`: oxlint 검사

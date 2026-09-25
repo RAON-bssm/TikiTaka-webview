@@ -46,9 +46,10 @@
 
 ```bash
 pnpm dev      # http://localhost:5173 (앱 없이 열면 목 브리지로 동작)
-pnpm build    # tsc -b && vite build
+pnpm build    # manifest 최신 확인 → tsc -b → vite build
 pnpm lint     # oxlint
 pnpm preview  # 빌드 결과 확인
+pnpm gen:manifest  # public/parts → src/parts/manifest.ts 재생성
 ```
 
 - 작업을 마치면 `pnpm build`와 `pnpm lint`가 통과하는지 확인하세요.
@@ -71,6 +72,7 @@ pnpm preview  # 빌드 결과 확인
 public/
 ├ parts/                 # 기본 캐릭터 파츠 (앱 assets/character와 같은 구조)
 └ fonts/                 # Pretendard, OkDanDan-Bold 웹폰트
+scripts/gen-manifest.mjs # public/parts → src/parts/manifest.ts
 src/
 ├ main.tsx
 ├ App.tsx                # 브리지 초기화 + MapScreen
@@ -164,7 +166,9 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 ### 7.4 기본 파츠 추가 방법
 
 1. 앱 `assets/character/`와 같은 경로 규칙으로 `public/parts/`에 WebP를 넣습니다. (앱 번들 목록과 같게 유지)
+   - 캐릭터 레이어 폴더 8개만 가져옵니다. `footrest.webp`(꾸미기 화면 발판)처럼 레이어가 아닌 이미지는 넣지 않습니다.
 2. `pnpm gen:manifest`로 `src/parts/manifest.ts`를 재생성하고 함께 커밋합니다. **manifest를 손으로 고치지 마세요.**
+   - `pnpm build`는 manifest가 `public/parts`와 다르면 실패합니다(`gen-manifest --check`).
 
 ### 7.5 앱 레포와 동기화해야 하는 것
 
