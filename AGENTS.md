@@ -71,13 +71,13 @@ pnpm gen:manifest  # public/parts → src/parts/manifest.ts 재생성
 ```
 public/
 ├ parts/                 # 기본 캐릭터 파츠 (앱 assets/character와 같은 구조)
-└ fonts/                 # Pretendard, OkDanDan-Bold 웹폰트
+└ fonts/                 # OkDanDan-Bold (앱과 같은 원본 TTF). Pretendard는 본문 글자가 생기면 추가
 scripts/gen-manifest.mjs # public/parts → src/parts/manifest.ts
 src/
 ├ main.tsx
 ├ App.tsx                # 브리지 초기화 + MapScreen
 ├ bridge/                # bridge.ts(메시지 타입), schema.ts(zod 스키마), transport.ts(수신/전송), mock.ts(단독 실행용)
-├ map/                   # MapScreen, 동네 중심 좌표(geocoder+캐시), 캐릭터 이동 허용 영역
+├ map/                   # MapScreen, CharacterMarker(캐릭터+이름표 오버레이), 동네 중심 좌표(geocoder+캐시), bounds(캐릭터 이동 허용 영역), placement(첫 배치)
 ├ character/             # layers.ts, resolvePart.ts, imageCache.ts, CharacterSprite, RoamingCharacter, useRoaming
 ├ bubble/                # 말풍선
 ├ sticker/               # (M6) 스티커 레이어·편집 모드
@@ -192,7 +192,9 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - **색상:** `primary-600` `#FC8253`(주황, 브랜드), `secondary-500` `#4078FF`(파랑), `gray-50` `#F8F9FB` ~ `gray-800` `#1A202C`, 흰색 `#FFFFFF`. 각 팔레트의 전체 스케일은 앱 `src/constants/colors.js` 기준입니다.
 - **간격:** `xs` 4 / `sm` 8 / `md` 12 / `lg` 16 / `xl` 20 / `2xl` 24 / `3xl` 40 / `4xl` 48 (px)
 - **반경:** `xs` 4 / `sm` 8 / `md` 12 / `lg` 16 / `xl` 24 / `full` 9999 (px)
-- **폰트:** Pretendard(Regular/Medium/Bold, 본문), OkDanDan-Bold(캐릭터 이름표·강조). 웹폰트로 변환해 `public/fonts/`에 둡니다.
+- **폰트:** Pretendard(Regular/Medium/Bold, 본문), OkDanDan-Bold(캐릭터 이름표·강조). 앱 `assets/fonts/`의 파일을 `public/fonts/`에 두고 `src/styles/fonts.css`에서 선언합니다.
+  - **OkDanDan(Ok단단체)은 웹 사용·임베딩은 되지만 폰트 파일 수정·재배포가 금지**입니다. WOFF2 변환이나 서브셋을 하지 말고 원본 TTF를 그대로 씁니다.
+  - Pretendard는 파일이 커서(굵기당 약 2.7MB) 본문 글자가 실제로 생길 때 추가합니다. OFL이라 WOFF2 변환·서브셋이 가능합니다.
 - 지도 로드 전 배경은 `gray-50`(`#F8F9FB`)입니다. 흰 화면이 번쩍이지 않게 `html`, `body`, `#root`에 지정합니다.
 
 ---
