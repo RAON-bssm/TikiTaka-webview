@@ -56,7 +56,7 @@ pnpm dev   # http://localhost:5173
 1. **JavaScript 키**를 사용합니다. 로그인에 쓰는 네이티브 앱 키, REST API 키와 다른 키입니다. (셋 다 32자라 헷갈리기 쉽습니다)
 2. 그 JavaScript 키의 **JavaScript SDK 도메인**에 지도를 띄울 주소를 등록합니다.
    - `http://localhost:5173` (로컬 개발, 포트까지 정확히)
-   - Vercel 고정 도메인
+   - Vercel 고정 도메인 `https://tiki-taka-webview.vercel.app`
 3. **제품 설정 → 카카오맵 → 사용 설정**을 켭니다.
 
 ### 자주 만나는 에러
