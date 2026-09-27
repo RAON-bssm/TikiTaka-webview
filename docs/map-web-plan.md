@@ -344,7 +344,15 @@ key = 위 규칙으로 생성
   - 화면 밖 캐릭터는 이동 계산만 하고 DOM은 갱신하지 않거나 정지
   - `document.visibilityState`가 hidden이면 전체 정지(탭 전환이나 백그라운드 시)
 - 캐릭터를 탭하면 걷기를 멈추고 살짝 튀는 애니메이션 → `characterTap` 전송. 챗봇 UI는 RN이 띄운다.
-  - 탭과 튀는 모션(Web Animations API, `transform`만)은 구현됨. 걷기 멈춤은 돌아다니기와 함께 한다.
+  - 탭과 튀는 모션(Web Animations API, `transform`만) 구현됨. 탭하면 3초 멈추고, 말풍선이 떠 있는 동안에도 멈춘다.
+- 구현 메모 (`src/map/roaming.ts`)
+  - 모든 캐릭터를 **rAF 루프 하나**로 움직이고, React를 다시 그리지 않는다. 카카오 오버레이의 `setPosition`/`setZIndex`와 걷기 클래스만 직접 바꾼다. 갱신 간격은 83ms(약 12fps).
+  - 속도는 **화면 px 기준**(임시 18px/초)이라 줌과 상관없이 같은 빠르기로 보인다. 한 번에 최대 400m까지 걷고, 목표 지점은 영역(원) 안이다.
+  - 걷는 동안 이동 거리에 따라 `zIndex`를 다시 계산한다(아래 캐릭터가 앞).
+  - 화면 밖(여유 120px) 캐릭터와 줌 애니메이션 중에는 DOM을 건드리지 않고, 줌이 끝나면 한 번에 반영한다.
+  - 페이지가 숨겨지면 루프를 멈추고, 돌아왔을 때 한 번에 너무 멀리 가지 않게 dt를 250ms로 자른다.
+  - 줌아웃으로 마커가 숨어도 위치 계산은 계속되고, 다시 나타나면 그 위치에 선다. 라이브러리가 `onCreate` 직후 `position` prop으로 위치를 덮어쓰므로, 엔진은 같은 커밋이 끝난 뒤(마이크로태스크) 위치를 다시 적용한다.
+  - **좌우 반전은 하지 않는다.** 캐릭터가 정면을 보고 있어 뒤집어도 방향감이 없고, 비대칭 파츠(머리핀, 사이드테일 등)만 좌우가 바뀐다. 옆모습 파츠가 생기면 다시 검토한다.
 
 ### 6.4 말풍선
 
@@ -400,14 +408,14 @@ tikitaka-map/
 │  │  ├ useNeighborhoodCenter.ts   # geocoder + 캐시
 │  │  ├ CharacterMarker.tsx # 캐릭터 + 이름표 오버레이
 │  │  ├ placement.ts        # 첫 배치 (최소 간격)
+│  │  ├ roaming.ts          # 돌아다니기 엔진 (이동 상태 머신, rAF 루프 하나)
+│  │  ├ useRoaming.ts       # 지도가 만들어지면 엔진 시작
 │  │  └ bounds.ts           # 캐릭터 이동 허용 영역 (반경 → 경계 폴리곤)
 │  ├ character/
 │  │  ├ layers.ts           # LAYERS, 기하 상수 (앱과 동일)
 │  │  ├ resolvePart.ts      # 5장 해석 규칙
 │  │  ├ imageCache.ts
-│  │  ├ CharacterSprite.tsx
-│  │  ├ RoamingCharacter.tsx
-│  │  └ useRoaming.ts       # 이동 상태 머신
+│  │  └ CharacterSprite.tsx
 │  ├ bubble/               # SpeechBubble.tsx, useBubbles.ts (캐릭터별 말풍선 + 타이머)
 │  ├ sticker/               # M6
 │  ├ parts/manifest.ts      # 번들된 파츠 경로 목록 (스크립트로 생성)
