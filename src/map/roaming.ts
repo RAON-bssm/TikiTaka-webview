@@ -13,7 +13,7 @@ const MAX_WALK_M = 400;
 /** 멈춰 있는 시간 범위(ms) */
 const IDLE_MIN_MS = 2000;
 const IDLE_MAX_MS = 5000;
-/** 화면 밖이어도 이만큼(px) 안쪽이면 DOM을 갱신한다. 화면 가장자리에서 갑자기 나타나지 않게 */
+/** 화면 밖이어도 이만큼(px) 안쪽이면 DOM을 갱신한다. 그보다 멀면 숨긴다. 화면 가장자리에서 갑자기 나타나지 않게 */
 const VIEW_MARGIN_PX = 120;
 
 /** 화면 아래(위도가 낮은) 캐릭터가 앞에 오도록 한다. 오버레이 zIndex는 정수여야 한다. */
@@ -44,6 +44,8 @@ interface View {
   appliedPosition: LatLng | null;
   appliedZIndex: number | null;
   appliedWalking: boolean;
+  /** 화면에서 멀리 벗어나 숨겼는지. 숨긴 동안은 위치를 갱신하지 않는다 */
+  hidden: boolean;
 }
 
 function randomIdleMs(): number {
@@ -56,7 +58,9 @@ function randomIdleMs(): number {
  *
  * - idle(2~5초) → walking(목표 지점까지) → idle ... 목표 지점은 캐릭터 이동 허용 영역(bounds.ts) 안
  * - 말풍선이 떠 있거나 탭 직후에는 멈춘다
- * - 화면 밖 캐릭터는 위치 계산만 하고 DOM은 건드리지 않는다. 줌 애니메이션 중에도 DOM을 멈춘다
+ * - 화면 밖 캐릭터는 숨기고 위치 계산만 한다(DOM 위치는 갱신하지 않는다). 다시 들어오면 위치를 맞추고 보인다
+ *   숨기지 않으면 멈춘 옛 위치가 지도를 옮겼을 때 엉뚱한 곳에 보인다
+ * - 줌 애니메이션 중에는 DOM을 멈춘다
  * - 페이지가 숨겨지면(visibilityState hidden) 루프를 멈춘다
  */
 export class RoamingEngine {
@@ -114,6 +118,7 @@ export class RoamingEngine {
     view.overlay = overlay;
     view.appliedPosition = null;
     view.appliedZIndex = null;
+    view.hidden = false; // 새 오버레이는 보이는 상태로 만들어진다
     this.forgetEmptyView(id, view);
     if (!overlay) return;
     // onCreate 직후 라이브러리가 position prop(첫 배치 위치)으로 setPosition을 한 번 더 부른다.
@@ -146,6 +151,7 @@ export class RoamingEngine {
         appliedPosition: null,
         appliedZIndex: null,
         appliedWalking: false,
+        hidden: false,
       };
       this.views.set(id, view);
     }
@@ -277,7 +283,10 @@ export class RoamingEngine {
     );
   }
 
-  /** 계산된 상태를 DOM에 반영한다. force가 아니면 화면 밖·줌 중에는 건너뛴다 */
+  /**
+   * 계산된 상태를 DOM에 반영한다. force가 아니면 줌 중에는 건너뛰고, 화면에서 멀리 벗어나면 숨긴다.
+   * force면(리셋·줌 끝·마커 등록 등) 화면 밖이어도 정확한 위치로 맞추므로 보이게 둔다.
+   */
   private apply(agent: Agent, force: boolean): void {
     const view = this.views.get(agent.id);
     if (!view) return;
@@ -288,7 +297,16 @@ export class RoamingEngine {
       view.appliedWalking = walking;
     }
     if (!overlay) return;
-    if (!force && (this.zooming || !this.isNearView(agent.position))) return;
+    if (!force) {
+      if (this.zooming) return;
+      if (!this.isNearView(agent.position)) {
+        if (!view.hidden) {
+          overlay.setVisible(false);
+          view.hidden = true;
+        }
+        return;
+      }
+    }
 
     if (view.appliedPosition !== agent.position) {
       overlay.setPosition(new kakao.maps.LatLng(agent.position.lat, agent.position.lng));
@@ -298,6 +316,11 @@ export class RoamingEngine {
     if (view.appliedZIndex !== zIndex) {
       overlay.setZIndex(zIndex);
       view.appliedZIndex = zIndex;
+    }
+    // 위치를 맞춘 뒤에 보여야 옛 자리에서 한 번 깜빡이지 않는다
+    if (view.hidden) {
+      overlay.setVisible(true);
+      view.hidden = false;
     }
   }
 }
