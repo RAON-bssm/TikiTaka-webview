@@ -313,6 +313,8 @@ key = 위 규칙으로 생성
 ### 6.1 지도
 
 - SDK 로드: `useKakaoLoader({ appkey, libraries: ['services'] })`.
+  - `index.html`에서 `dapi.kakao.com`(SDK 로더), `t1.daumcdn.net`(SDK 본체), `mts.daumcdn.net`(지도 타일)에 `preconnect`를 걸고, SDK URL을 `<link rel="preload" as="script">`로 번들과 동시에 받는다. 실행은 로더가 넣는 `<script>`가 하며, preload URL이 로더가 만드는 URL과 글자까지 같아야 응답을 다시 쓴다. `libraries`를 바꾸면 두 곳을 같이 고친다.
+  - `<script async>`를 HTML에 직접 넣지 않는다. 로더의 `setScript`는 같은 id의 스크립트가 있어도 새로 하나 더 넣고, SDK 실행 전이면 `kakao`가 없어 에러가 난다.
 - 초기 중심: `neighborhood.center`가 있으면 사용하고, 없으면 `new kakao.maps.services.Geocoder().addressSearch('<시/도> <동네>')` 결과를 쓴다. 실패하면 `mapError(GEOCODE_FAILED)`를 보낸다.
 - geocoder 결과는 `locationId` 기준으로 `localStorage`에 캐시한다(쿼터 절약). 실패해도 동작해야 하므로 try/catch로 감싼다.
 - 줌: 별도 제한 작업은 두지 않는다. 캐릭터가 알아보기 어려울 만큼 멀어지면 캐릭터를 숨기는 기준 레벨(6.2)과 함께, 필요하면 `maxLevel` 하나만 둔다. 값은 디자인 확인 후 정한다.
