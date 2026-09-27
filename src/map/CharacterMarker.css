@@ -36,3 +36,24 @@
   margin-bottom: var(--space-sm);
   pointer-events: none;
 }
+
+/* 걷는 동안 통통 튄다. 클래스는 돌아다니기 엔진(roaming.ts)이 붙인다 */
+.character-marker--walking .character-marker__body {
+  animation: character-walk 420ms ease-in-out infinite;
+}
+
+@keyframes character-walk {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .character-marker--walking .character-marker__body {
+    animation: none;
+  }
+}

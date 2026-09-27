@@ -5,6 +5,7 @@ import { send } from '../bridge/transport';
 import type { Bubble } from '../bubble/useBubbles';
 import CharacterMarker from './CharacterMarker';
 import { placeCharacters } from './placement';
+import useRoaming from './useRoaming';
 import useNeighborhoodCenter from './useNeighborhoodCenter';
 
 /** 초기 줌 레벨(숫자가 작을수록 확대). TODO: 디자인 확인 후 확정 (캐릭터 숨김 기준 레벨과 함께) */
@@ -37,6 +38,7 @@ interface MapScreenProps {
 export default function MapScreen({ neighborhood, characters, bubbles, partUrls }: MapScreenProps) {
   const centerState = useNeighborhoodCenter(neighborhood);
   const [level, setLevel] = useState(INITIAL_LEVEL);
+  const [map, setMap] = useState<kakao.maps.Map | null>(null);
   /** mapLoaded는 동네마다 한 번만 보낸다 (타일은 이동할 때마다 다시 로드된다) */
   const loadedFor = useRef<number | null>(null);
 
@@ -55,6 +57,20 @@ export default function MapScreen({ neighborhood, characters, bubbles, partUrls 
     return visible.map((character, index) => ({ character, position: positions[index] }));
   }, [characters, centerLat, centerLng]);
 
+  const areaCenter = useMemo(
+    () =>
+      centerLat === undefined || centerLng === undefined
+        ? null
+        : { lat: centerLat, lng: centerLng },
+    [centerLat, centerLng],
+  );
+  const placements = useMemo(
+    () => placed.map(({ character, position }) => ({ id: character.id, position })),
+    [placed],
+  );
+  const busyIds = useMemo(() => new Set(Object.keys(bubbles)), [bubbles]);
+  const roaming = useRoaming(map, areaCenter, placements, busyIds);
+
   useEffect(() => {
     if (centerState.status === 'error') {
       send({ type: 'mapError', code: 'GEOCODE_FAILED', message: centerState.message });
@@ -62,7 +78,11 @@ export default function MapScreen({ neighborhood, characters, bubbles, partUrls 
   }, [centerState]);
 
   /** 동네가 바뀌면 Map이 새로 만들어져 INITIAL_LEVEL로 돌아가므로, 만들어질 때도 레벨을 다시 읽는다 */
-  const syncLevel = useCallback((map: kakao.maps.Map) => setLevel(map.getLevel()), []);
+  const syncLevel = useCallback((created: kakao.maps.Map) => setLevel(created.getLevel()), []);
+  const handleCreate = useCallback((created: kakao.maps.Map) => {
+    setMap(created);
+    setLevel(created.getLevel());
+  }, []);
 
   if (!center) return null;
 
@@ -80,7 +100,7 @@ export default function MapScreen({ neighborhood, characters, bubbles, partUrls 
       level={INITIAL_LEVEL}
       style={MAP_STYLE}
       onTileLoaded={handleTileLoaded}
-      onCreate={syncLevel}
+      onCreate={handleCreate}
       onZoomChanged={syncLevel}
     >
       {size !== null &&
@@ -92,6 +112,7 @@ export default function MapScreen({ neighborhood, characters, bubbles, partUrls 
             size={size}
             bubble={bubbles[character.id]}
             partUrls={partUrls}
+            roaming={roaming}
           />
         ))}
     </Map>
