@@ -8,6 +8,21 @@
     />
     <meta name="color-scheme" content="light" />
     <title>TikiTaka 동네 지도</title>
+    <!--
+      카카오 연결을 미리 연다. dapi: SDK 로더, t1: SDK 본체(kakao.js, services.js), mts: 지도 타일
+    -->
+    <link rel="preconnect" href="https://dapi.kakao.com" />
+    <link rel="preconnect" href="https://t1.daumcdn.net" />
+    <link rel="preconnect" href="https://mts.daumcdn.net" />
+    <!--
+      SDK를 번들과 동시에 받아 둔다. 실행은 useKakaoLoader가 넣는 <script>가 한다.
+      URL이 로더가 만드는 것과 글자까지 같아야 이 응답을 다시 쓴다(App.tsx의 libraries와 맞출 것).
+    -->
+    <link
+      rel="preload"
+      as="script"
+      href="//dapi.kakao.com/v2/maps/sdk.js?appkey=%VITE_KAKAO_JS_KEY%&libraries=services&autoload=false"
+    />
   </head>
   <body>
     <div id="root"></div>

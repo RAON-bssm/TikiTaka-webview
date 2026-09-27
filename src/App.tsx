@@ -9,6 +9,7 @@ import MapScreen from './map/MapScreen';
 const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
 export default function App() {
+  // libraries를 바꾸면 index.html의 SDK preload URL도 같이 바꾼다
   const [loading, error] = useKakaoLoader({ appkey: KAKAO_JS_KEY, libraries: ['services'] });
   const [neighborhood, setNeighborhood] = useState<Neighborhood | null>(null);
   const [characters, setCharacters] = useState<MapCharacter[]>([]);
