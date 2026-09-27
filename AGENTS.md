@@ -77,8 +77,8 @@ src/
 ├ main.tsx
 ├ App.tsx                # 브리지 초기화 + MapScreen
 ├ bridge/                # bridge.ts(메시지 타입), schema.ts(zod 스키마), transport.ts(수신/전송), mock.ts(단독 실행용)
-├ map/                   # MapScreen, CharacterMarker(캐릭터+이름표 오버레이), 동네 중심 좌표(geocoder+캐시), bounds(캐릭터 이동 허용 영역), placement(첫 배치)
-├ character/             # layers.ts, resolvePart.ts, imageCache.ts, CharacterSprite, RoamingCharacter, useRoaming
+├ map/                   # MapScreen, CharacterMarker(캐릭터+이름표 오버레이), 동네 중심 좌표(geocoder+캐시), bounds(캐릭터 이동 허용 영역), placement(첫 배치), roaming·useRoaming(돌아다니기 엔진)
+├ character/             # layers.ts, resolvePart.ts, CharacterSprite (imageCache는 M4)
 ├ bubble/                # SpeechBubble, useBubbles(캐릭터별 말풍선 + 사라지는 타이머)
 ├ sticker/               # (M6) 스티커 레이어·편집 모드
 ├ dev/                   # 개발 전용 화면 (예: SpritePreview, `pnpm dev`에서 `/?sprite`). 운영 번들에 들어가지 않게 `import.meta.env.DEV`로 막는다
@@ -87,7 +87,7 @@ src/
 docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 ```
 
-- 여러 기능에서 쓰는 순수 유틸은 `src/utils/`, 공용 훅은 `src/hooks/`에 둡니다.
+- 여러 기능에서 쓰는 순수 유틸은 `src/utils/`(예: `geo.ts` 좌표 계산, `seededRandom.ts`), 공용 훅은 `src/hooks/`에 둡니다.
 - 한 파일에만 쓰이는 작은 헬퍼는 그 파일 안에 둡니다.
 
 ---
