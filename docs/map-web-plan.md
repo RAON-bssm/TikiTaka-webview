@@ -220,6 +220,8 @@ type ToWeb =
   | { v: 1; type: 'setNeighborhood'; neighborhood: Neighborhood; characters: MapCharacter[] }
   | { v: 1; type: 'upsertCharacters'; characters: MapCharacter[]; partUrls?: PartUrlMap }
   | { v: 1; type: 'showBubble'; characterId: string; text: string; durationMs?: number }
+  | { v: 1; type: 'showTyping'; characterId: string } // 답 대기 중 '…' 말풍선. showBubble이 오면 교체
+  | { v: 1; type: 'hideBubble'; characterId: string } // 말풍선(대기 포함) 즉시 지움. 챗봇 요청 실패 시
   | { v: 1; type: 'focusCharacter'; characterId: string }
   // (추후) 스티커
   | { v: 1; type: 'setStickers'; stickers: PlacedSticker[]; stickerUrls: Record<string, string> }
@@ -362,6 +364,7 @@ key = 위 규칙으로 생성
 - `showBubble`을 받으면 캐릭터 머리 위에 표시하고, `durationMs`(기본 4초) 후 사라진다.
 - 긴 텍스트는 2줄에서 말줄임한다. 전체 대화는 RN 챗봇 화면의 몫이다.
 - 한 캐릭터에 새 말풍선이 오면 이전 것을 교체한다.
+- `showTyping`을 받으면 점 세 개가 차례로 튀는 대기 말풍선을 띄운다. 챗봇 답이 오면 RN이 `showBubble`로 교체하고, 요청이 실패하면 `hideBubble`로 지운다. RN이 끝을 알리지 못해도 남지 않도록 60초 뒤 스스로 사라진다.
 - 구현 메모
   - 타이머는 마커가 아니라 `useBubbles`에 둔다. 줌아웃으로 캐릭터가 숨어 있어도 시간이 되면 사라진다.
   - 말풍선이 뜬 캐릭터는 다른 캐릭터보다 앞에 그린다(`zIndex`를 올린다).

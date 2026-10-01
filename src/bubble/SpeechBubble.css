@@ -29,6 +29,30 @@
   overflow-wrap: anywhere;
 }
 
+/* 대기 중 '…': 점 세 개가 차례로 튄다. 높이를 글자 한 줄과 맞춰 답으로 바뀔 때 덜 출렁이게 한다 */
+.speech-bubble__typing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  height: var(--line-height-sm);
+}
+
+.speech-bubble__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-gray-400);
+  animation: speech-bubble-typing 1.2s ease-in-out infinite;
+}
+
+.speech-bubble__dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.speech-bubble__dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
 /* 꼬리: 테두리색 삼각형 위에 흰 삼각형을 1px 올려 테두리가 이어져 보이게 한다 */
 .speech-bubble::before,
 .speech-bubble::after {
@@ -61,8 +85,22 @@
   }
 }
 
+@keyframes speech-bubble-typing {
+  0%,
+  60%,
+  100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(calc(-1 * var(--space-xs)));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .speech-bubble {
+  .speech-bubble,
+  .speech-bubble__dot {
     animation: none;
   }
 }

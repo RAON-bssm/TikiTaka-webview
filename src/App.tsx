@@ -15,7 +15,13 @@ export default function App() {
   const [characters, setCharacters] = useState<MapCharacter[]>([]);
   /** init으로만 온다. setNeighborhood에는 없으므로 이전 값을 그대로 쓴다 */
   const [partUrls, setPartUrls] = useState<PartUrlMap>({});
-  const { bubbles, show: showBubble, clear: clearBubbles } = useBubbles();
+  const {
+    bubbles,
+    show: showBubble,
+    showTyping,
+    hide: hideBubble,
+    clear: clearBubbles,
+  } = useBubbles();
 
   useEffect(() => {
     if (error) {
@@ -49,6 +55,12 @@ export default function App() {
           // 지금 없는 캐릭터의 말풍선은 그려지지 않고 시간이 되면 사라진다
           showBubble(message.characterId, message.text, message.durationMs);
           break;
+        case 'showTyping':
+          showTyping(message.characterId);
+          break;
+        case 'hideBubble':
+          hideBubble(message.characterId);
+          break;
         default:
           // 아직 구현하지 않은 메시지. 모르는 type과 마찬가지로 무시한다.
           log('info', `미구현 메시지 무시: ${message.type}`);
@@ -59,7 +71,7 @@ export default function App() {
     send({ type: 'ready' });
     if (!isInApp()) window.__tikitaka?.receive(MOCK_INIT);
     return unregister;
-  }, [loading, error, showBubble, clearBubbles]);
+  }, [loading, error, showBubble, showTyping, hideBubble, clearBubbles]);
 
   if (!neighborhood) return null;
   return (
