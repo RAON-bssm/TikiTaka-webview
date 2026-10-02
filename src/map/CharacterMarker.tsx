@@ -103,7 +103,7 @@ const CharacterMarker = memo(function CharacterMarker({
         </span>
         {bubble && (
           <div className="character-marker__bubble">
-            <SpeechBubble key={bubble.id} text={bubble.text} />
+            <SpeechBubble key={bubble.id} bubble={bubble} />
           </div>
         )}
       </div>

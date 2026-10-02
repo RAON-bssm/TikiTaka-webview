@@ -57,7 +57,7 @@ function randomIdleMs(): number {
  * React를 다시 그리지 않고 카카오 오버레이의 setPosition / setZIndex와 클래스만 직접 바꾼다.
  *
  * - idle(2~5초) → walking(목표 지점까지) → idle ... 목표 지점은 캐릭터 이동 허용 영역(bounds.ts) 안
- * - 말풍선이 떠 있거나 탭 직후에는 멈춘다
+ * - 말풍선이 떠 있거나 탭 직후에는 멈춘다. 대화 중(포커스)인 캐릭터는 포커스가 풀릴 때까지 멈춘다
  * - 화면 밖 캐릭터는 숨기고 위치 계산만 한다(DOM 위치는 갱신하지 않는다). 다시 들어오면 위치를 맞추고 보인다
  *   숨기지 않으면 멈춘 옛 위치가 지도를 옮겼을 때 엉뚱한 곳에 보인다
  * - 줌 애니메이션 중에는 DOM을 멈춘다
@@ -69,6 +69,8 @@ export class RoamingEngine {
   private readonly agents = new Map<string, Agent>();
   private readonly views = new Map<string, View>();
   private busy: ReadonlySet<string> = new Set();
+  /** 대화 중인 캐릭터. hold·busy와 달리 저절로 풀리지 않고 setFocus(null)까지 멈춘다 */
+  private focusedId: string | null = null;
   private frame: number | null = null;
   private lastTick: number | null = null;
   private zooming = false;
@@ -101,6 +103,23 @@ export class RoamingEngine {
   setBusy(ids: ReadonlySet<string>): void {
     this.busy = ids;
     this.agents.forEach((agent) => this.apply(agent, true));
+  }
+
+  /**
+   * 대화 중인 캐릭터를 정한다(한 번에 하나). 이전 캐릭터는 풀린다.
+   * 아직 없는 id여도 걸어 두므로, 나중에 배치되면 그때부터 멈춰 있다.
+   */
+  setFocus(id: string | null): void {
+    this.focusedId = id;
+    const agent = id === null ? undefined : this.agents.get(id);
+    if (!agent) return;
+    this.stopWalking(agent);
+    this.apply(agent, true);
+  }
+
+  /** 지금 위치. 첫 배치 위치가 아니라 걸어간 뒤의 위치다. 없는 캐릭터면 null */
+  positionOf(id: string): LatLng | null {
+    return this.agents.get(id)?.position ?? null;
   }
 
   /** 탭 등으로 잠시 멈춘다 */
@@ -229,7 +248,7 @@ export class RoamingEngine {
     const stepM = metersPerPx === null ? 0 : (WALK_SPEED_PX * metersPerPx * dtMs) / 1000;
 
     this.agents.forEach((agent) => {
-      if (this.busy.has(agent.id) || now < agent.holdUntil) {
+      if (agent.id === this.focusedId || this.busy.has(agent.id) || now < agent.holdUntil) {
         this.stopWalking(agent);
       } else if (agent.state === 'idle') {
         if (now >= agent.idleUntil) {

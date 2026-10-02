@@ -4,7 +4,7 @@ import type { MapCharacter, Neighborhood, PartUrlMap, ToWeb } from './bridge/bri
 import { MOCK_INIT } from './bridge/mock';
 import { isInApp, log, registerReceiver, send } from './bridge/transport';
 import useBubbles from './bubble/useBubbles';
-import MapScreen from './map/MapScreen';
+import MapScreen, { type Focus } from './map/MapScreen';
 
 const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
@@ -15,7 +15,15 @@ export default function App() {
   const [characters, setCharacters] = useState<MapCharacter[]>([]);
   /** init으로만 온다. setNeighborhood에는 없으므로 이전 값을 그대로 쓴다 */
   const [partUrls, setPartUrls] = useState<PartUrlMap>({});
-  const { bubbles, show: showBubble, clear: clearBubbles } = useBubbles();
+  /** 대화 중인 캐릭터. focusCharacter마다 새 객체라 같은 캐릭터가 다시 와도 다시 맞춘다 */
+  const [focus, setFocus] = useState<Focus | null>(null);
+  const {
+    bubbles,
+    show: showBubble,
+    showTyping,
+    hide: hideBubble,
+    clear: clearBubbles,
+  } = useBubbles();
 
   useEffect(() => {
     if (error) {
@@ -38,16 +46,33 @@ export default function App() {
           setPartUrls(message.partUrls);
           setNeighborhood(message.neighborhood);
           setCharacters(message.characters);
+          setFocus(null);
           clearBubbles();
           break;
         case 'setNeighborhood':
           setNeighborhood(message.neighborhood);
           setCharacters(message.characters);
+          setFocus(null);
           clearBubbles();
+          break;
+        case 'focusCharacter':
+          setFocus({
+            characterId: message.characterId,
+            bottomInsetPx: message.bottomInsetPx ?? 0,
+          });
+          break;
+        case 'clearFocus':
+          setFocus(null);
           break;
         case 'showBubble':
           // 지금 없는 캐릭터의 말풍선은 그려지지 않고 시간이 되면 사라진다
           showBubble(message.characterId, message.text, message.durationMs);
+          break;
+        case 'showTyping':
+          showTyping(message.characterId);
+          break;
+        case 'hideBubble':
+          hideBubble(message.characterId);
           break;
         default:
           // 아직 구현하지 않은 메시지. 모르는 type과 마찬가지로 무시한다.
@@ -59,7 +84,7 @@ export default function App() {
     send({ type: 'ready' });
     if (!isInApp()) window.__tikitaka?.receive(MOCK_INIT);
     return unregister;
-  }, [loading, error, showBubble, clearBubbles]);
+  }, [loading, error, showBubble, showTyping, hideBubble, clearBubbles]);
 
   if (!neighborhood) return null;
   return (
@@ -67,6 +92,7 @@ export default function App() {
       neighborhood={neighborhood}
       characters={characters}
       bubbles={bubbles}
+      focus={focus}
       partUrls={partUrls}
     />
   );

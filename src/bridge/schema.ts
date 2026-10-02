@@ -73,7 +73,15 @@ const ToWebSchema = z.discriminatedUnion('type', [
     text: z.string(),
     durationMs: z.optional(z.number()),
   }),
-  z.object({ v, type: z.literal('focusCharacter'), characterId: z.string() }),
+  z.object({ v, type: z.literal('showTyping'), characterId: z.string() }),
+  z.object({ v, type: z.literal('hideBubble'), characterId: z.string() }),
+  z.object({
+    v,
+    type: z.literal('focusCharacter'),
+    characterId: z.string(),
+    bottomInsetPx: z.optional(z.number()),
+  }),
+  z.object({ v, type: z.literal('clearFocus') }),
   z.object({
     v,
     type: z.literal('setStickers'),
