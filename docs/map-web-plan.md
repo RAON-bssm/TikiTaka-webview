@@ -222,7 +222,9 @@ type ToWeb =
   | { v: 1; type: 'showBubble'; characterId: string; text: string; durationMs?: number }
   | { v: 1; type: 'showTyping'; characterId: string } // 답 대기 중 '…' 말풍선. showBubble이 오면 교체
   | { v: 1; type: 'hideBubble'; characterId: string } // 말풍선(대기 포함) 즉시 지움. 챗봇 요청 실패 시
-  | { v: 1; type: 'focusCharacter'; characterId: string }
+  // 대화 시작. 이 캐릭터로 확대하고 clearFocus가 올 때까지 멈춘다. bottomInsetPx: WebView 아래 끝에서 RN 패널이 가리는 높이(CSS px)
+  | { v: 1; type: 'focusCharacter'; characterId: string; bottomInsetPx?: number }
+  | { v: 1; type: 'clearFocus' } // 대화 종료. 멈춤을 풀어 다시 돌아다니게 한다
   // (추후) 스티커
   | { v: 1; type: 'setStickers'; stickers: PlacedSticker[]; stickerUrls: Record<string, string> }
   | { v: 1; type: 'setEditMode'; enabled: boolean };
@@ -349,6 +351,12 @@ key = 위 규칙으로 생성
   - `document.visibilityState`가 hidden이면 전체 정지(탭 전환이나 백그라운드 시)
 - 캐릭터를 탭하면 걷기를 멈추고 살짝 튀는 애니메이션 → `characterTap` 전송. 챗봇 UI는 RN이 띄운다.
   - 탭과 튀는 모션(Web Animations API, `transform`만) 구현됨. 탭하면 3초 멈추고, 말풍선이 떠 있는 동안에도 멈춘다.
+- 대화 포커스: RN이 대화 패널을 열면 `focusCharacter`, 닫으면 `clearFocus`를 보낸다. 패널을 언제 닫는지는 RN만 안다.
+  - 포커스된 캐릭터는 `clearFocus`까지 멈춘다. 탭 멈춤(`hold`)·말풍선 멈춤(`busy`)과 별개 상태(`focusedId`)라서, 이 둘이 풀려도 다시 걷지 않는다.
+  - 받는 순간 지금 위치(첫 배치 위치가 아님)로 `FOCUS_LEVEL`(4)까지 확대하고, 캐릭터가 `bottomInsetPx`만큼 가려진 아래를 뺀 영역의 가운데에 오게 옮긴다. 이미 더 확대돼 있으면 줌아웃하지 않는다.
+  - 확대·이동은 받을 때 한 번만 한다. 그 뒤 사용자가 지도를 움직여도 다시 끌어오지 않고, `clearFocus` 때 줌도 되돌리지 않는다.
+  - 다른 캐릭터로 오면 포커스를 옮긴다(한 번에 하나). 표시 상한 밖이거나 줌아웃으로 숨겨진 캐릭터는 확대·이동을 건너뛰지만, 멈춤은 걸어 둔다.
+  - `init`/`setNeighborhood`를 받으면 포커스를 지운다.
 - 구현 메모 (`src/map/roaming.ts`)
   - 모든 캐릭터를 **rAF 루프 하나**로 움직이고, React를 다시 그리지 않는다. 카카오 오버레이의 `setPosition`/`setZIndex`와 걷기 클래스만 직접 바꾼다. 갱신 간격은 83ms(약 12fps).
   - 속도는 **화면 px 기준**(임시 18px/초)이라 줌과 상관없이 같은 빠르기로 보인다. 한 번에 최대 400m까지 걷고, 목표 지점은 영역(원) 안이다.

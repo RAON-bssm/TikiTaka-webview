@@ -4,7 +4,7 @@ import type { MapCharacter, Neighborhood, PartUrlMap, ToWeb } from './bridge/bri
 import { MOCK_INIT } from './bridge/mock';
 import { isInApp, log, registerReceiver, send } from './bridge/transport';
 import useBubbles from './bubble/useBubbles';
-import MapScreen from './map/MapScreen';
+import MapScreen, { type Focus } from './map/MapScreen';
 
 const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
@@ -15,6 +15,8 @@ export default function App() {
   const [characters, setCharacters] = useState<MapCharacter[]>([]);
   /** init으로만 온다. setNeighborhood에는 없으므로 이전 값을 그대로 쓴다 */
   const [partUrls, setPartUrls] = useState<PartUrlMap>({});
+  /** 대화 중인 캐릭터. focusCharacter마다 새 객체라 같은 캐릭터가 다시 와도 다시 맞춘다 */
+  const [focus, setFocus] = useState<Focus | null>(null);
   const {
     bubbles,
     show: showBubble,
@@ -44,12 +46,23 @@ export default function App() {
           setPartUrls(message.partUrls);
           setNeighborhood(message.neighborhood);
           setCharacters(message.characters);
+          setFocus(null);
           clearBubbles();
           break;
         case 'setNeighborhood':
           setNeighborhood(message.neighborhood);
           setCharacters(message.characters);
+          setFocus(null);
           clearBubbles();
+          break;
+        case 'focusCharacter':
+          setFocus({
+            characterId: message.characterId,
+            bottomInsetPx: message.bottomInsetPx ?? 0,
+          });
+          break;
+        case 'clearFocus':
+          setFocus(null);
           break;
         case 'showBubble':
           // 지금 없는 캐릭터의 말풍선은 그려지지 않고 시간이 되면 사라진다
@@ -79,6 +92,7 @@ export default function App() {
       neighborhood={neighborhood}
       characters={characters}
       bubbles={bubbles}
+      focus={focus}
       partUrls={partUrls}
     />
   );
