@@ -9,8 +9,29 @@ import useRoaming from './useRoaming';
 import useNeighborhoodCenter from './useNeighborhoodCenter';
 import { useDongBoundaries } from './useDongBoundaries';
 
-/** 땅따먹기 동 경계 시각화 테스트용. 소유권 색칠은 아직 없고 윤곽선만 그린다. */
-const DONG_BOUNDARY_STROKE_COLOR = '#6e7d94'; // tokens.css --color-gray-500
+/**
+ * 땅따먹기 동 경계 시각화 테스트용 임시 팔레트. 소유권 색칠이 아니라 동 구분용이라
+ * 디자인 토큰이 아닌 범용 categorical 색상을 쓴다. 실제 소유권 색은 나중에 따로 정한다.
+ */
+const DONG_FILL_PALETTE = [
+  '#fc8253', // tokens.css --color-primary-600
+  '#4078ff', // tokens.css --color-secondary-500
+  '#2fb77a',
+  '#c2577a',
+  '#7a5cd6',
+  '#cf9b1f',
+  '#3aa0c9',
+  '#c2683a',
+];
+
+/** 동 이름으로 팔레트 인덱스를 결정한다(같은 동은 항상 같은 색). */
+function colorForDong(dong: string): string {
+  let hash = 0;
+  for (let i = 0; i < dong.length; i += 1) {
+    hash = (hash * 31 + dong.charCodeAt(i)) | 0;
+  }
+  return DONG_FILL_PALETTE[Math.abs(hash) % DONG_FILL_PALETTE.length];
+}
 
 /** 초기 줌 레벨(숫자가 작을수록 확대). TODO: 디자인 확인 후 확정 (캐릭터 숨김 기준 레벨과 함께) */
 const INITIAL_LEVEL = 6;
@@ -163,18 +184,20 @@ export default function MapScreen({
       onCreate={handleCreate}
       onZoomChanged={syncLevel}
     >
-      {dongBoundaries.map((boundary) =>
-        boundary.parts.map((rings, partIndex) => (
+      {dongBoundaries.map((boundary) => {
+        const color = colorForDong(boundary.dong);
+        return boundary.parts.map((rings, partIndex) => (
           <Polygon
             key={`${boundary.dong}-${partIndex}`}
             path={rings}
             strokeWeight={2}
-            strokeColor={DONG_BOUNDARY_STROKE_COLOR}
-            strokeOpacity={0.8}
-            fillOpacity={0}
+            strokeColor={color}
+            strokeOpacity={0.9}
+            fillColor={color}
+            fillOpacity={0.25}
           />
-        )),
-      )}
+        ));
+      })}
       {size !== null &&
         placed.map(({ character, position }) => (
           <CharacterMarker
