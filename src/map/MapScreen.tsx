@@ -93,7 +93,7 @@ export default function MapScreen({
   partUrls,
 }: MapScreenProps) {
   const centerState = useNeighborhoodCenter(neighborhood);
-  const dongBoundaries = useDongBoundaries(neighborhood.name);
+  const dongBoundaries = useDongBoundaries();
   const [level, setLevel] = useState(INITIAL_LEVEL);
   const [map, setMap] = useState<kakao.maps.Map | null>(null);
   /** mapLoaded는 동네마다 한 번만 보낸다 (타일은 이동할 때마다 다시 로드된다) */

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { LatLng } from '../bridge/bridge';
 import { log } from '../bridge/transport';
 
@@ -104,8 +104,8 @@ function loadAll(): Promise<DongBoundary[]> {
   return cache;
 }
 
-/** `gu`(구/군 이름, 예: '북구')에 속한 동 경계만 돌려준다. */
-export function useDongBoundaries(gu: string): DongBoundary[] {
+/** 부산 전체 동 경계를 돌려준다(현재 동네가 속한 구로 한정하지 않음). */
+export function useDongBoundaries(): DongBoundary[] {
   const [all, setAll] = useState<DongBoundary[]>([]);
 
   useEffect(() => {
@@ -118,5 +118,5 @@ export function useDongBoundaries(gu: string): DongBoundary[] {
     };
   }, []);
 
-  return useMemo(() => all.filter((boundary) => boundary.gu === gu), [all, gu]);
+  return all;
 }
