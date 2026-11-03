@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Map, Polygon } from 'react-kakao-maps-sdk';
+import { Map } from 'react-kakao-maps-sdk';
 import type { MapCharacter, Neighborhood, PartUrlMap } from '../bridge/bridge';
 import { log, send } from '../bridge/transport';
 import type { Bubble } from '../bubble/useBubbles';
@@ -7,10 +7,6 @@ import CharacterMarker from './CharacterMarker';
 import { placeCharacters } from './placement';
 import useRoaming from './useRoaming';
 import useNeighborhoodCenter from './useNeighborhoodCenter';
-import { useDongBoundaries } from './useDongBoundaries';
-
-/** 땅따먹기 동 경계 시각화 테스트용. 소유권 색칠은 아직 없고 윤곽선만 그린다. */
-const DONG_BOUNDARY_STROKE_COLOR = '#6e7d94'; // tokens.css --color-gray-500
 
 /** 초기 줌 레벨(숫자가 작을수록 확대). TODO: 디자인 확인 후 확정 (캐릭터 숨김 기준 레벨과 함께) */
 const INITIAL_LEVEL = 6;
@@ -72,7 +68,6 @@ export default function MapScreen({
   partUrls,
 }: MapScreenProps) {
   const centerState = useNeighborhoodCenter(neighborhood);
-  const dongBoundaries = useDongBoundaries(neighborhood.name);
   const [level, setLevel] = useState(INITIAL_LEVEL);
   const [map, setMap] = useState<kakao.maps.Map | null>(null);
   /** mapLoaded는 동네마다 한 번만 보낸다 (타일은 이동할 때마다 다시 로드된다) */
@@ -163,18 +158,6 @@ export default function MapScreen({
       onCreate={handleCreate}
       onZoomChanged={syncLevel}
     >
-      {dongBoundaries.map((boundary) =>
-        boundary.parts.map((rings, partIndex) => (
-          <Polygon
-            key={`${boundary.dong}-${partIndex}`}
-            path={rings}
-            strokeWeight={2}
-            strokeColor={DONG_BOUNDARY_STROKE_COLOR}
-            strokeOpacity={0.8}
-            fillOpacity={0}
-          />
-        )),
-      )}
       {size !== null &&
         placed.map(({ character, position }) => (
           <CharacterMarker
