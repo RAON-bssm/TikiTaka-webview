@@ -56,7 +56,8 @@ pnpm dev   # http://localhost:5173
 1. **JavaScript 키**를 사용합니다. 로그인에 쓰는 네이티브 앱 키, REST API 키와 다른 키입니다. (셋 다 32자라 헷갈리기 쉽습니다)
 2. 그 JavaScript 키의 **JavaScript SDK 도메인**에 지도를 띄울 주소를 등록합니다.
    - `http://localhost:5173` (로컬 개발, 포트까지 정확히)
-   - Vercel 고정 도메인 `https://tiki-taka-webview.vercel.app`
+   - Vercel 운영 도메인 `https://tiki-taka-webview.vercel.app` (`main`)
+   - Vercel 개발 서버 도메인 `https://tiki-taka-webview-dev.vercel.app` (`dev`)
 3. **제품 설정 → 카카오맵 → 사용 설정**을 켭니다.
 
 ### 자주 만나는 에러
@@ -68,7 +69,7 @@ pnpm dev   # http://localhost:5173
 | `AccessDeniedError: domain mismatched! caller=...` | 지금 연 주소(포트 포함)가 JavaScript SDK 도메인에 없음. 포트가 5174 등으로 바뀌었는지도 확인 |
 | `NotAuthorizedError: disabled OPEN_MAP_AND_LOCAL`  | 카카오맵 사용 설정이 꺼져 있음                                                               |
 
-> **Vercel 프리뷰 배포 URL은 매번 바뀌어 등록할 수 없습니다.** 프리뷰에서 지도가 안 뜨는 것은 정상이며, 확인은 고정 도메인으로 합니다.
+> **Vercel 프리뷰 배포 URL은 매번 바뀌어 등록할 수 없습니다.** 프리뷰에서 지도가 안 뜨는 것은 정상이며, 확인은 고정 도메인(운영·개발 서버)으로 합니다.
 
 ---
 
