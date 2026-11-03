@@ -25,7 +25,7 @@
 - **메시지 검증:** `zod` (번들 크기 때문에 `zod/mini`로 import)
 - **린트:** oxlint (`.oxlintrc.json`)
 - **패키지 매니저:** **pnpm** (절대 `npm`, `yarn`, `bun`을 사용하지 마세요)
-- **배포:** Vercel (고정 도메인). `main`에 push하면 배포됩니다.
+- **배포:** Vercel (고정 도메인). `main`은 운영(`https://tiki-taka-webview.vercel.app`), `dev`는 개발 서버(`https://tiki-taka-webview-dev.vercel.app`)로 배포됩니다.
 
 ### 핵심 패키지 버전 (package.json 기준)
 
@@ -205,7 +205,7 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - **viewport:** `width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no`. 페이지 확대 대신 지도 줌만 동작해야 합니다.
 - **터치 UX:** `user-select: none`, `-webkit-touch-callout: none`, `-webkit-tap-highlight-color: transparent`를 유지하고, 이미지에는 `draggable={false}`를 줍니다.
 - **카카오 JS 키**는 `VITE_KAKAO_JS_KEY` 환경변수로 읽습니다. `.env`는 커밋하지 않고, 새 환경변수를 추가하면 `.env.example`도 갱신합니다.
-- 카카오 콘솔에 등록된 도메인에서만 지도가 뜹니다. **Vercel 프리뷰 배포에서 지도가 안 뜨는 것은 정상입니다.**
+- 카카오 콘솔에 등록된 도메인(localhost:5173, 운영·개발 서버 고정 도메인)에서만 지도가 뜹니다. **배포마다 바뀌는 Vercel 프리뷰 URL에서 지도가 안 뜨는 것은 정상입니다.** 개발 서버 도메인은 `dev` 브랜치에 붙은 프리뷰라, Vercel Deployment Protection을 켜면 WebView에 로그인 화면이 뜹니다.
 - **지도 자체의 색·스타일은 바꿀 수 없습니다.** 앱 느낌은 오버레이로만 냅니다. **카카오 로고와 저작권 표기를 가리지 마세요**(약관).
 - 지도 위 요소는 `CustomOverlayMap`으로 올립니다. 캐릭터는 발 위치가 좌표에 오도록 `yAnchor: 1`로 둡니다.
 - geocoder 결과는 `localStorage`에 캐시하되, `localStorage` 접근은 항상 `try/catch`로 감쌉니다(WebView에서 막혀 있을 수 있음).
