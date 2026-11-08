@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useKakaoLoader } from 'react-kakao-maps-sdk';
-import type { MapCharacter, Neighborhood, PartUrlMap, ToWeb } from './bridge/bridge';
-import { MOCK_INIT } from './bridge/mock';
+import type { MapCharacter, MapTerritory, Neighborhood, PartUrlMap, ToWeb } from './bridge/bridge';
+import { MOCK_INIT, MOCK_TERRITORIES } from './bridge/mock';
 import { isInApp, log, registerReceiver, send } from './bridge/transport';
 import useBubbles from './bubble/useBubbles';
-import MapScreen, { type Focus } from './map/MapScreen';
+import MapScreen, { type DongSelection, type Focus } from './map/MapScreen';
 
 const KAKAO_JS_KEY = import.meta.env.VITE_KAKAO_JS_KEY;
 
@@ -17,6 +17,9 @@ export default function App() {
   const [partUrls, setPartUrls] = useState<PartUrlMap>({});
   /** 대화 중인 캐릭터. focusCharacter마다 새 객체라 같은 캐릭터가 다시 와도 다시 맞춘다 */
   const [focus, setFocus] = useState<Focus | null>(null);
+  const [territories, setTerritories] = useState<MapTerritory[]>([]);
+  /** selectDong마다 새 객체라 같은 동이 다시 와도 다시 맞춘다 */
+  const [selection, setSelection] = useState<DongSelection | null>(null);
   const {
     bubbles,
     show: showBubble,
@@ -47,6 +50,7 @@ export default function App() {
           setNeighborhood(message.neighborhood);
           setCharacters(message.characters);
           setFocus(null);
+          setSelection(null);
           clearBubbles();
           break;
         case 'setNeighborhood':
@@ -66,13 +70,23 @@ export default function App() {
           break;
         case 'showBubble':
           // 지금 없는 캐릭터의 말풍선은 그려지지 않고 시간이 되면 사라진다
-          showBubble(message.characterId, message.text, message.durationMs);
+          showBubble(message.characterId, message.text, message.durationMs, message.persistent);
           break;
         case 'showTyping':
           showTyping(message.characterId);
           break;
         case 'hideBubble':
           hideBubble(message.characterId);
+          break;
+        case 'setTerritories':
+          setTerritories(message.territories);
+          break;
+        case 'selectDong':
+          setSelection(
+            message.dongCode === undefined
+              ? null
+              : { dongCode: message.dongCode, bottomInsetPx: message.bottomInsetPx ?? 0 },
+          );
           break;
         default:
           // 아직 구현하지 않은 메시지. 모르는 type과 마찬가지로 무시한다.
@@ -82,7 +96,10 @@ export default function App() {
 
     const unregister = registerReceiver(handle);
     send({ type: 'ready' });
-    if (!isInApp()) window.__tikitaka?.receive(MOCK_INIT);
+    if (!isInApp()) {
+      window.__tikitaka?.receive(MOCK_INIT);
+      window.__tikitaka?.receive(MOCK_TERRITORIES);
+    }
     return unregister;
   }, [loading, error, showBubble, showTyping, hideBubble, clearBubbles]);
 
@@ -94,6 +111,8 @@ export default function App() {
       bubbles={bubbles}
       focus={focus}
       partUrls={partUrls}
+      territories={territories}
+      selection={selection}
     />
   );
 }

@@ -60,3 +60,17 @@ export const MOCK_INIT: Extract<ToWeb, { type: 'init' }> = {
   ],
   partUrls: {},
 };
+
+/** 앱 없이 열었을 때 땅따먹기 색을 확인하기 위한 땅. 네 가지 관계와 차단 표시를 한 번씩 보여준다. */
+export const MOCK_TERRITORIES: Extract<ToWeb, { type: 'setTerritories' }> = {
+  v: 1,
+  type: 'setTerritories',
+  territories: [
+    { dongCode: 2632051000, tone: 'mine' },
+    { dongCode: 2632052000, tone: 'team' },
+    { dongCode: 2632052100, tone: 'rival' },
+    { dongCode: 2632053000, tone: 'neutral' },
+    { dongCode: 2632054100, tone: 'rival', blocked: true },
+    { dongCode: 2632054200, tone: 'team' },
+  ],
+};

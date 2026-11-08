@@ -31,10 +31,13 @@ export default function useBubbles() {
     });
   }, []);
 
+  /** duration이 null이면 hideBubble이나 다음 말풍선이 올 때까지 남긴다 */
   const put = useCallback(
-    (characterId: string, bubble: Bubble, duration: number) => {
+    (characterId: string, bubble: Bubble, duration: number | null) => {
       window.clearTimeout(timers.current.get(characterId));
+      timers.current.delete(characterId);
       setBubbles((prev) => ({ ...prev, [characterId]: bubble }));
+      if (duration === null) return;
       timers.current.set(
         characterId,
         window.setTimeout(() => hide(characterId), duration),
@@ -44,9 +47,10 @@ export default function useBubbles() {
   );
 
   const show = useCallback(
-    (characterId: string, text: string, durationMs?: number) => {
-      const duration =
-        durationMs !== undefined && Number.isFinite(durationMs) && durationMs > 0
+    (characterId: string, text: string, durationMs?: number, persistent?: boolean) => {
+      const duration = persistent
+        ? null
+        : durationMs !== undefined && Number.isFinite(durationMs) && durationMs > 0
           ? durationMs
           : DEFAULT_DURATION_MS;
       nextId.current += 1;

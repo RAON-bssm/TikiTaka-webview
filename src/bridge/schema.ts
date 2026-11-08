@@ -44,6 +44,12 @@ const PlacedSticker = z.object({
   scale: z.number(),
 });
 
+const MapTerritory = z.object({
+  dongCode: z.number(),
+  tone: z.enum(['mine', 'team', 'rival', 'neutral']),
+  blocked: z.optional(z.boolean()),
+});
+
 const v = z.literal(1);
 
 const ToWebSchema = z.discriminatedUnion('type', [
@@ -72,6 +78,7 @@ const ToWebSchema = z.discriminatedUnion('type', [
     characterId: z.string(),
     text: z.string(),
     durationMs: z.optional(z.number()),
+    persistent: z.optional(z.boolean()),
   }),
   z.object({ v, type: z.literal('showTyping'), characterId: z.string() }),
   z.object({ v, type: z.literal('hideBubble'), characterId: z.string() }),
@@ -89,6 +96,13 @@ const ToWebSchema = z.discriminatedUnion('type', [
     stickerUrls: PartUrlMap,
   }),
   z.object({ v, type: z.literal('setEditMode'), enabled: z.boolean() }),
+  z.object({ v, type: z.literal('setTerritories'), territories: z.array(MapTerritory) }),
+  z.object({
+    v,
+    type: z.literal('selectDong'),
+    dongCode: z.optional(z.number()),
+    bottomInsetPx: z.optional(z.number()),
+  }),
 ]);
 
 // 스키마와 bridge.ts 타입이 일치해야 한다. 메시지를 추가·변경했다면 양쪽을 같이 고친다.
@@ -110,6 +124,7 @@ export type SchemaMatchesToWeb = [
   Assert<Matches<z.infer<typeof MapCharacter>, Bridge.MapCharacter>>,
   Assert<Matches<z.infer<typeof Neighborhood>, Bridge.Neighborhood>>,
   Assert<Matches<z.infer<typeof PlacedSticker>, Bridge.PlacedSticker>>,
+  Assert<Matches<z.infer<typeof MapTerritory>, Bridge.MapTerritory>>,
 ];
 
 const KNOWN_TYPES: ReadonlySet<string> = new Set(
