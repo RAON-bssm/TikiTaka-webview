@@ -50,6 +50,7 @@ pnpm build    # manifest 최신 확인 → tsc -b → vite build
 pnpm lint     # oxlint
 pnpm preview  # 빌드 결과 확인
 pnpm gen:manifest  # public/parts → src/parts/manifest.ts 재생성
+pnpm gen:dong-boundaries  # scripts/data/busan_dong.geojson → public/territory/dong-boundaries.json 재생성
 ```
 
 - 작업을 마치면 `pnpm build`와 `pnpm lint`가 통과하는지 확인하세요.
@@ -71,8 +72,10 @@ pnpm gen:manifest  # public/parts → src/parts/manifest.ts 재생성
 ```
 public/
 ├ parts/                 # 기본 캐릭터 파츠 (앱 assets/character와 같은 구조)
-└ fonts/                 # OkDanDan-Bold (앱과 같은 원본 TTF), pretendard/ (공식 SemiBold 동적 서브셋 + LICENSE)
+├ fonts/                 # OkDanDan-Bold (앱과 같은 원본 TTF), pretendard/ (공식 SemiBold 동적 서브셋 + LICENSE)
+└ territory/             # dong-boundaries.json (땅따먹기 동 경계, 자동 생성)
 scripts/gen-manifest.mjs # public/parts → src/parts/manifest.ts
+scripts/gen-dong-boundaries.mjs # scripts/data/busan_dong.geojson → public/territory/dong-boundaries.json
 src/
 ├ main.tsx
 ├ App.tsx                # 브리지 초기화 + MapScreen
@@ -80,6 +83,7 @@ src/
 ├ map/                   # MapScreen, CharacterMarker(캐릭터+이름표 오버레이), 동네 중심 좌표(geocoder+캐시), bounds(캐릭터 이동 허용 영역), placement(첫 배치), roaming·useRoaming(돌아다니기 엔진)
 ├ character/             # layers.ts, resolvePart.ts, CharacterSprite (imageCache는 M4)
 ├ bubble/                # SpeechBubble, useBubbles(캐릭터별 말풍선 + 사라지는 타이머)
+├ territory/             # 땅따먹기: TerritoryLayer(동 폴리곤을 관계 색으로 칠하고 dongTap 전송), useDongBoundaries(경계 지연 로드)
 ├ sticker/               # (M6) 스티커 레이어·편집 모드
 ├ dev/                   # 개발 전용 화면 (예: SpritePreview, `pnpm dev`에서 `/?sprite`). 운영 번들에 들어가지 않게 `import.meta.env.DEV`로 막는다
 ├ parts/manifest.ts      # 번들 파츠 경로 목록 (자동 생성)
@@ -174,12 +178,14 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 
 ### 7.5 앱 레포와 동기화해야 하는 것
 
-| 웹                        | 앱 (`TikiTaka-app`)                                                   |
-| ------------------------- | --------------------------------------------------------------------- |
-| `src/bridge/bridge.ts`    | 앱의 브리지 메시지 타입 파일                                          |
-| `src/character/layers.ts` | `src/constants/character/types.ts`의 `LAYERS`, 기본 config            |
-| `public/parts/`           | `assets/character/`                                                   |
-| `src/styles/tokens.css`   | `src/constants/colors.js`, `tailwind.config.js`의 간격·반경·폰트 크기 |
+| 웹                                                   | 앱 (`TikiTaka-app`)                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------ |
+| `src/bridge/bridge.ts`                               | 앱의 브리지 메시지 타입 파일                                             |
+| `src/character/layers.ts`                            | `src/constants/character/types.ts`의 `LAYERS`, 기본 config               |
+| `public/parts/`                                      | `assets/character/`                                                      |
+| `src/styles/tokens.css`                              | `src/constants/colors.js`, `tailwind.config.js`의 간격·반경·폰트 크기    |
+| `scripts/data/busan_dong.geojson`                    | `scripts/data/territory/busan_dong.geojson` (서버 시드와 같은 경계 버전) |
+| `src/territory/TerritoryLayer.tsx`의 `TONE_STYLE` 색 | `src/constants/colors.js`                                                |
 
 한쪽을 바꾸면 다른 쪽도 바꿔야 합니다. 앱 레포 파일은 이 레포에서 수정하지 말고, 바뀐 내용을 사용자에게 알려 주세요.
 

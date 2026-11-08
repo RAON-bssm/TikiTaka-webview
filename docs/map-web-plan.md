@@ -203,6 +203,15 @@ interface MapCharacter {
   kind: 'npc' | 'user'; // 추후 동작 차이용
 }
 
+// 땅따먹기 땅. 팀 개념은 앱이 계산해 tone으로만 넘긴다.
+// mine: 내 땅, team: 우리 팀(본진 구) 땅, rival: 다른 팀 땅, neutral: 주인 없는 땅
+// 경계는 웹이 dongCode(행정동 코드 adm_cd2)로 public/territory/dong-boundaries.json에서 찾는다.
+interface MapTerritory {
+  dongCode: number;
+  tone: 'mine' | 'team' | 'rival' | 'neutral';
+  blocked?: boolean; // 차단한 유저의 땅 (회색 점선)
+}
+
 interface Neighborhood {
   locationId: number;
   cityName: string; // '부산광역시'
@@ -221,7 +230,15 @@ type ToWeb =
     }
   | { v: 1; type: 'setNeighborhood'; neighborhood: Neighborhood; characters: MapCharacter[] }
   | { v: 1; type: 'upsertCharacters'; characters: MapCharacter[]; partUrls?: PartUrlMap }
-  | { v: 1; type: 'showBubble'; characterId: string; text: string; durationMs?: number }
+  // persistent: true면 durationMs를 무시하고 hideBubble이나 다음 말풍선이 올 때까지 남긴다
+  | {
+      v: 1;
+      type: 'showBubble';
+      characterId: string;
+      text: string;
+      durationMs?: number;
+      persistent?: boolean;
+    }
   | { v: 1; type: 'showTyping'; characterId: string } // 답 대기 중 '…' 말풍선. showBubble이 오면 교체
   | { v: 1; type: 'hideBubble'; characterId: string } // 말풍선(대기 포함) 즉시 지움. 챗봇 요청 실패 시
   // 대화 시작. 이 캐릭터로 확대하고 clearFocus가 올 때까지 멈춘다. bottomInsetPx: WebView 아래 끝에서 RN 패널이 가리는 높이(CSS px)
@@ -229,19 +246,28 @@ type ToWeb =
   | { v: 1; type: 'clearFocus' } // 대화 종료. 멈춤을 풀어 다시 돌아다니게 한다
   // (추후) 스티커
   | { v: 1; type: 'setStickers'; stickers: PlacedSticker[]; stickerUrls: Record<string, string> }
-  | { v: 1; type: 'setEditMode'; enabled: boolean };
+  | { v: 1; type: 'setEditMode'; enabled: boolean }
+  // 땅따먹기 땅 전체를 바꿔 칠한다. 빈 배열이면 지운다. 땅이 생기기 전까지 웹은 경계 파일을 받지 않는다
+  | { v: 1; type: 'setTerritories'; territories: MapTerritory[] }
+  // 고른 동을 강조하고 RN 시트에 가리지 않는 곳으로 옮긴다. dongCode가 없으면 강조를 푼다
+  | { v: 1; type: 'selectDong'; dongCode?: number; bottomInsetPx?: number };
 
 // 웹 → RN
 type ToRN =
   | { v: 1; type: 'ready' } // SDK 로드 + 수신 함수 등록 완료
   | { v: 1; type: 'mapLoaded' } // 첫 화면 렌더 완료 (RN 로딩 UI 해제)
   | { v: 1; type: 'characterTap'; characterId: string }
+  | { v: 1; type: 'mapTap' } // 캐릭터·동이 아닌 빈 지도를 탭함(드래그·핀치 제외)
+  // 사용자가 드래그·핀치로 지도를 움직이기 시작함. focusCharacter·selectDong처럼 웹이 스스로 움직일 때는 보내지 않는다
+  | { v: 1; type: 'mapMoveStart' }
   | {
       v: 1;
       type: 'mapError';
       code: 'SDK_LOAD_FAILED' | 'GEOCODE_FAILED' | 'UNKNOWN';
       message?: string;
     }
+  // 땅따먹기 동을 탭함. 캐릭터 위를 탭하면 characterTap이 먼저다. 동을 탭하면 mapTap은 보내지 않는다
+  | { v: 1; type: 'dongTap'; dongCode: number }
   | { v: 1; type: 'log'; level: 'info' | 'warn' | 'error'; message: string } // 개발용
   // (추후) 스티커
   | { v: 1; type: 'stickersChanged'; stickers: PlacedSticker[] };
