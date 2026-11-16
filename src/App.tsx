@@ -57,6 +57,8 @@ export default function App() {
           setNeighborhood(message.neighborhood);
           setCharacters(message.characters);
           setFocus(null);
+          // 새 동네로 옮긴 뒤 이전 동으로 되돌아가지 않게 한다. 새 선택은 selectDong으로 다시 온다
+          setSelection(null);
           clearBubbles();
           break;
         case 'focusCharacter':
