@@ -35,10 +35,23 @@ function toPath(ring: FlatRing): LatLng[] {
   return path;
 }
 
+/** 좌표 단위 그대로의 넓이(신발끈 공식). 파트끼리 크기를 비교하는 데만 쓴다. */
+function areaOf(ring: FlatRing): number {
+  let sum = 0;
+  for (let i = 0; i + 1 < ring.length; i += 2) {
+    const j = (i + 2) % ring.length;
+    sum += ring[i] * ring[j + 1] - ring[j] * ring[i + 1];
+  }
+  return Math.abs(sum) / 2;
+}
+
 function centerOf(polygons: FlatRing[][]): LatLng {
-  const outer = polygons
-    .map((rings) => rings[0])
-    .reduce((largest, ring) => (ring.length > largest.length ? ring : largest));
+  let outer = polygons[0][0];
+  let largestArea = areaOf(outer);
+  for (const rings of polygons.slice(1)) {
+    const area = areaOf(rings[0]);
+    if (area > largestArea) [outer, largestArea] = [rings[0], area];
+  }
   let [minLng, minLat, maxLng, maxLat] = [Infinity, Infinity, -Infinity, -Infinity];
   for (let i = 0; i + 1 < outer.length; i += 2) {
     minLng = Math.min(minLng, outer[i]);
