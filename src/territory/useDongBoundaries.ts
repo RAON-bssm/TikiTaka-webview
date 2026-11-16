@@ -79,10 +79,13 @@ function parse(data: unknown): Map<number, DongBoundary> {
   return result;
 }
 
-let cache: Promise<Map<number, DongBoundary>> | null = null;
+let cache: Promise<Map<number, DongBoundary> | null> | null = null;
 
-/** WebView가 다시 로드되기 전까지는 한 번만 받는다. 실패하면 다음에 다시 시도한다. */
-function load(): Promise<Map<number, DongBoundary>> {
+/**
+ * WebView가 다시 로드되기 전까지는 한 번만 받는다.
+ * 실패하면 캐시를 비우고 null을 돌려준다. 다시 시도는 훅이 예약한다.
+ */
+function load(): Promise<Map<number, DongBoundary> | null> {
   cache ??= fetch(BOUNDARIES_URL)
     .then((response) => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -95,27 +98,39 @@ function load(): Promise<Map<number, DongBoundary>> {
         'warn',
         `동 경계를 불러오지 못했습니다: ${error instanceof Error ? error.message : String(error)}`,
       );
-      return new Map<number, DongBoundary>();
+      return null;
     });
   return cache;
 }
 
 const EMPTY: DongBoundaries = new Map();
 
+/** 실패한 뒤 다시 받기까지 기다리는 시간. 실패할 때마다 두 배로 늘린다. */
+const RETRY_BASE_MS = 2000;
+const RETRY_MAX_MS = 60000;
+
 /** 땅따먹기가 열렸을 때(enabled)만 경계를 받는다. 첫 로딩 시간에 영향을 주지 않기 위해서다. */
 export default function useDongBoundaries(enabled: boolean): DongBoundaries {
   const [boundaries, setBoundaries] = useState<DongBoundaries>(EMPTY);
+  /** 실패한 횟수. 바뀌면 effect가 다시 돌아 load()를 다시 부른다 */
+  const [failures, setFailures] = useState(0);
 
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    void load().then((loaded) => {
-      if (!cancelled) setBoundaries(loaded);
-    });
+    const delay = failures === 0 ? 0 : Math.min(RETRY_BASE_MS * 2 ** (failures - 1), RETRY_MAX_MS);
+    const timer = setTimeout(() => {
+      void load().then((loaded) => {
+        if (cancelled) return;
+        if (loaded) setBoundaries(loaded);
+        else setFailures((count) => count + 1);
+      });
+    }, delay);
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [enabled]);
+  }, [enabled, failures]);
 
   return boundaries;
 }
