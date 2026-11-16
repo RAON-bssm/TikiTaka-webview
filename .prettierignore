@@ -1,6 +1,7 @@
 node_modules/
 dist/
 public/
+scripts/data/
 .husky/_/
 *.lock
 pnpm-lock.yaml

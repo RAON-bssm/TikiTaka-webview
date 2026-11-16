@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Map } from 'react-kakao-maps-sdk';
-import type { MapCharacter, Neighborhood, PartUrlMap } from '../bridge/bridge';
+import type { MapCharacter, MapTerritory, Neighborhood, PartUrlMap } from '../bridge/bridge';
 import { log, send } from '../bridge/transport';
 import type { Bubble } from '../bubble/useBubbles';
+import TerritoryLayer from '../territory/TerritoryLayer';
+import useDongBoundaries from '../territory/useDongBoundaries';
 import CharacterMarker from './CharacterMarker';
 import { placeCharacters } from './placement';
 import useRoaming from './useRoaming';
@@ -28,6 +30,18 @@ function characterSizeAt(level: number): number | null {
   if (level <= 6) return 64;
   if (level <= 8) return 40;
   return null;
+}
+
+/**
+ * 동을 탭하면 폴리곤 click과 지도 click이 둘 다 온다(순서는 보장되지 않음).
+ * 지도 click을 한 틱 미루고, 이 시간 안에 동 탭이 있었으면 mapTap을 보내지 않는다.
+ */
+const DONG_TAP_DEDUPE_MS = 300;
+
+/** RN selectDong. 고른 동과 RN 시트가 가리는 높이 */
+export interface DongSelection {
+  dongCode: number;
+  bottomInsetPx: number;
 }
 
 /** 대화 중인 캐릭터 (RN focusCharacter) */
@@ -58,6 +72,8 @@ interface MapScreenProps {
   focus: Focus | null;
   /** 파츠 경로 키 → 서버 URL (번들에 없는 파츠용) */
   partUrls: PartUrlMap;
+  territories: MapTerritory[];
+  selection: DongSelection | null;
 }
 
 export default function MapScreen({
@@ -66,8 +82,12 @@ export default function MapScreen({
   bubbles,
   focus,
   partUrls,
+  territories,
+  selection,
 }: MapScreenProps) {
   const centerState = useNeighborhoodCenter(neighborhood);
+  const boundaries = useDongBoundaries(territories.length > 0 || selection !== null);
+  const lastDongTapAt = useRef(0);
   const [level, setLevel] = useState(INITIAL_LEVEL);
   const [map, setMap] = useState<kakao.maps.Map | null>(null);
   /** mapLoaded는 동네마다 한 번만 보낸다 (타일은 이동할 때마다 다시 로드된다) */
@@ -126,6 +146,38 @@ export default function MapScreen({
     return () => kakao.maps.event.removeListener(map, 'zoom_changed', handleZoomed);
   }, [focus, map, roaming]);
 
+  // 고른 동을 시트에 가리지 않는 곳으로 옮긴다. 경계를 받기 전에 오면 받은 뒤에 옮긴다
+  useEffect(() => {
+    if (!selection || !map) return;
+    const boundary = boundaries.get(selection.dongCode);
+    if (!boundary) return;
+    const { lat, lng } = boundary.center;
+    centerAbovePanel(map, new kakao.maps.LatLng(lat, lng), selection.bottomInsetPx);
+  }, [selection, map, boundaries]);
+
+  // 핀치 줌은 카카오 이벤트로 사용자 조작과 focusCharacter 확대를 구분할 수 없어 터치로 직접 본다
+  useEffect(() => {
+    if (!map) return;
+    const node = map.getNode();
+    let pinching = false;
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length < 2 || pinching) return;
+      pinching = true;
+      send({ type: 'mapMoveStart' });
+    };
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (event.touches.length === 0) pinching = false;
+    };
+    node.addEventListener('touchstart', handleTouchStart, { passive: true });
+    node.addEventListener('touchend', handleTouchEnd, { passive: true });
+    node.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    return () => {
+      node.removeEventListener('touchstart', handleTouchStart);
+      node.removeEventListener('touchend', handleTouchEnd);
+      node.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [map]);
+
   useEffect(() => {
     if (centerState.status === 'error') {
       send({ type: 'mapError', code: 'GEOCODE_FAILED', message: centerState.message });
@@ -134,6 +186,18 @@ export default function MapScreen({
 
   /** 동네가 바뀌면 Map이 새로 만들어져 INITIAL_LEVEL로 돌아가므로, 만들어질 때도 레벨을 다시 읽는다 */
   const syncLevel = useCallback((created: kakao.maps.Map) => setLevel(created.getLevel()), []);
+  const handleDongTap = useCallback((dongCode: number) => {
+    lastDongTapAt.current = Date.now();
+    send({ type: 'dongTap', dongCode });
+  }, []);
+  // 캐릭터 오버레이는 clickable이라 캐릭터를 탭하면 지도 click이 오지 않는다
+  const handleMapClick = useCallback(() => {
+    window.setTimeout(() => {
+      if (Date.now() - lastDongTapAt.current < DONG_TAP_DEDUPE_MS) return;
+      send({ type: 'mapTap' });
+    }, 0);
+  }, []);
+  const handleDragStart = useCallback(() => send({ type: 'mapMoveStart' }), []);
   const handleCreate = useCallback((created: kakao.maps.Map) => {
     setMap(created);
     setLevel(created.getLevel());
@@ -157,7 +221,15 @@ export default function MapScreen({
       onTileLoaded={handleTileLoaded}
       onCreate={handleCreate}
       onZoomChanged={syncLevel}
+      onClick={handleMapClick}
+      onDragStart={handleDragStart}
     >
+      <TerritoryLayer
+        territories={territories}
+        boundaries={boundaries}
+        selectedDong={selection?.dongCode ?? null}
+        onDongTap={handleDongTap}
+      />
       {size !== null &&
         placed.map(({ character, position }) => (
           <CharacterMarker

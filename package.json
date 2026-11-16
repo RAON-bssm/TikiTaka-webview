@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/gen-manifest.mjs --check && tsc -b && vite build",
+    "build": "node scripts/gen-manifest.mjs --check && node scripts/gen-dong-boundaries.mjs --check && tsc -b && vite build",
     "gen:manifest": "node scripts/gen-manifest.mjs",
+    "gen:dong-boundaries": "node scripts/gen-dong-boundaries.mjs",
     "lint": "oxlint",
     "preview": "vite preview",
     "format": "prettier --write .",

@@ -203,6 +203,15 @@ interface MapCharacter {
   kind: 'npc' | 'user'; // 추후 동작 차이용
 }
 
+// 땅따먹기 땅. 팀 개념은 앱이 계산해 tone으로만 넘긴다.
+// mine: 내 땅, team: 우리 팀(본진 구) 땅, rival: 다른 팀 땅, neutral: 주인 없는 땅
+// 경계는 웹이 dongCode(행정동 코드 adm_cd2)로 public/territory/dong-boundaries.json에서 찾는다.
+interface MapTerritory {
+  dongCode: number;
+  tone: 'mine' | 'team' | 'rival' | 'neutral';
+  blocked?: boolean; // 차단한 유저의 땅 (회색 점선)
+}
+
 interface Neighborhood {
   locationId: number;
   cityName: string; // '부산광역시'
@@ -221,7 +230,15 @@ type ToWeb =
     }
   | { v: 1; type: 'setNeighborhood'; neighborhood: Neighborhood; characters: MapCharacter[] }
   | { v: 1; type: 'upsertCharacters'; characters: MapCharacter[]; partUrls?: PartUrlMap }
-  | { v: 1; type: 'showBubble'; characterId: string; text: string; durationMs?: number }
+  // persistent: true면 durationMs를 무시하고 hideBubble이나 다음 말풍선이 올 때까지 남긴다
+  | {
+      v: 1;
+      type: 'showBubble';
+      characterId: string;
+      text: string;
+      durationMs?: number;
+      persistent?: boolean;
+    }
   | { v: 1; type: 'showTyping'; characterId: string } // 답 대기 중 '…' 말풍선. showBubble이 오면 교체
   | { v: 1; type: 'hideBubble'; characterId: string } // 말풍선(대기 포함) 즉시 지움. 챗봇 요청 실패 시
   // 대화 시작. 이 캐릭터로 확대하고 clearFocus가 올 때까지 멈춘다. bottomInsetPx: WebView 아래 끝에서 RN 패널이 가리는 높이(CSS px)
@@ -229,19 +246,28 @@ type ToWeb =
   | { v: 1; type: 'clearFocus' } // 대화 종료. 멈춤을 풀어 다시 돌아다니게 한다
   // (추후) 스티커
   | { v: 1; type: 'setStickers'; stickers: PlacedSticker[]; stickerUrls: Record<string, string> }
-  | { v: 1; type: 'setEditMode'; enabled: boolean };
+  | { v: 1; type: 'setEditMode'; enabled: boolean }
+  // 땅따먹기 땅 전체를 바꿔 칠한다. 빈 배열이면 지운다. 땅이 생기기 전까지 웹은 경계 파일을 받지 않는다
+  | { v: 1; type: 'setTerritories'; territories: MapTerritory[] }
+  // 고른 동을 강조하고 RN 시트에 가리지 않는 곳으로 옮긴다. dongCode가 없으면 강조를 푼다
+  | { v: 1; type: 'selectDong'; dongCode?: number; bottomInsetPx?: number };
 
 // 웹 → RN
 type ToRN =
   | { v: 1; type: 'ready' } // SDK 로드 + 수신 함수 등록 완료
   | { v: 1; type: 'mapLoaded' } // 첫 화면 렌더 완료 (RN 로딩 UI 해제)
   | { v: 1; type: 'characterTap'; characterId: string }
+  | { v: 1; type: 'mapTap' } // 캐릭터·동이 아닌 빈 지도를 탭함(드래그·핀치 제외)
+  // 사용자가 드래그·핀치로 지도를 움직이기 시작함. focusCharacter·selectDong처럼 웹이 스스로 움직일 때는 보내지 않는다
+  | { v: 1; type: 'mapMoveStart' }
   | {
       v: 1;
       type: 'mapError';
       code: 'SDK_LOAD_FAILED' | 'GEOCODE_FAILED' | 'UNKNOWN';
       message?: string;
     }
+  // 땅따먹기 동을 탭함. 캐릭터 위를 탭하면 characterTap이 먼저다. 동을 탭하면 mapTap은 보내지 않는다
+  | { v: 1; type: 'dongTap'; dongCode: number }
   | { v: 1; type: 'log'; level: 'info' | 'warn' | 'error'; message: string } // 개발용
   // (추후) 스티커
   | { v: 1; type: 'stickersChanged'; stickers: PlacedSticker[] };
@@ -325,7 +351,7 @@ key = 위 규칙으로 생성
 - geocoder 결과는 `locationId` 기준으로 `localStorage`에 캐시한다(쿼터 절약). 실패해도 동작해야 하므로 try/catch로 감싼다.
 - 줌: 별도 제한 작업은 두지 않는다. 캐릭터가 알아보기 어려울 만큼 멀어지면 캐릭터를 숨기는 기준 레벨(6.2)과 함께, 필요하면 `maxLevel` 하나만 둔다. 값은 디자인 확인 후 정한다.
 - 이동 범위: **제한하지 않는다.** 카카오 JS API에는 "최대 경계" 옵션이 없어 `dragend`에서 되돌리는 방식밖에 없는데, 손을 뗄 때 지도가 튕겨 돌아가 사용감이 나쁘다. 옆 동네를 둘러봐도 깨지는 것이 없다. 멀리 벗어났을 때는 RN의 "우리 동네로" 버튼 등으로 동네 중심에 돌아오게 한다(필요해지면 브리지 메시지 추가).
-- 동네 전환(`setNeighborhood`): 캐릭터를 비우고, 새 중심으로 `panTo`한 뒤 새 캐릭터를 배치한다.
+- 동네 전환(`setNeighborhood`): 캐릭터를 비우고, 새 중심으로 `panTo`한 뒤 새 캐릭터를 배치한다. 동 선택(`selectDong`)도 푼다.
 - **지도 자체의 색이나 스타일은 바꿀 수 없다**(카카오 JS API 제약). 앱 느낌은 오버레이로 낸다.
 - 경계 폴리곤(마일스톤 M5): 행정구역 경계 GeoJSON이 필요하다. 출처와 라이선스(통계청 SGIS, 공공데이터 등)를 정한 뒤 `Polygon`으로 그린다. 경계가 생기면 캐릭터 이동 범위(목표 지점)를 폴리곤 기준으로 바꾼다. 사용자의 지도 이동은 제한하지 않는다.
 - 카카오 로고와 저작권 표기는 가리지 않는다(약관).

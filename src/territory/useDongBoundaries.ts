@@ -1,0 +1,136 @@
+import { useEffect, useState } from 'react';
+import type { LatLng } from '../bridge/bridge';
+import { log } from '../bridge/transport';
+
+/** `<Polygon path>` 하나 분량. `[0]`이 외곽선, 나머지는 구멍이다. */
+export type PolygonPath = LatLng[][];
+
+export interface DongBoundary {
+  /** 섬처럼 떨어진 영역이 있으면 여러 개다. `<Polygon>`을 파트마다 따로 그린다. */
+  polygons: PolygonPath[];
+  /** 가장 큰 파트의 경계 상자 가운데. 동을 고르면 이 점을 시트 위로 옮긴다. */
+  center: LatLng;
+}
+
+export type DongBoundaries = ReadonlyMap<number, DongBoundary>;
+
+/** scripts/gen-dong-boundaries.mjs가 만든다 */
+const BOUNDARIES_URL = '/territory/dong-boundaries.json';
+
+/** 링은 [lng, lat, lng, lat, ...] */
+type FlatRing = number[];
+
+function isFlatRings(value: unknown): value is FlatRing[] {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (ring) => Array.isArray(ring) && ring.length >= 6 && ring.every((n) => typeof n === 'number'),
+    )
+  );
+}
+
+function toPath(ring: FlatRing): LatLng[] {
+  const path: LatLng[] = [];
+  for (let i = 0; i + 1 < ring.length; i += 2) path.push({ lat: ring[i + 1], lng: ring[i] });
+  return path;
+}
+
+/** 좌표 단위 그대로의 넓이(신발끈 공식). 파트끼리 크기를 비교하는 데만 쓴다. */
+function areaOf(ring: FlatRing): number {
+  let sum = 0;
+  for (let i = 0; i + 1 < ring.length; i += 2) {
+    const j = (i + 2) % ring.length;
+    sum += ring[i] * ring[j + 1] - ring[j] * ring[i + 1];
+  }
+  return Math.abs(sum) / 2;
+}
+
+function centerOf(polygons: FlatRing[][]): LatLng {
+  let outer = polygons[0][0];
+  let largestArea = areaOf(outer);
+  for (const rings of polygons.slice(1)) {
+    const area = areaOf(rings[0]);
+    if (area > largestArea) [outer, largestArea] = [rings[0], area];
+  }
+  let [minLng, minLat, maxLng, maxLat] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (let i = 0; i + 1 < outer.length; i += 2) {
+    minLng = Math.min(minLng, outer[i]);
+    maxLng = Math.max(maxLng, outer[i]);
+    minLat = Math.min(minLat, outer[i + 1]);
+    maxLat = Math.max(maxLat, outer[i + 1]);
+  }
+  return { lat: (minLat + maxLat) / 2, lng: (minLng + maxLng) / 2 };
+}
+
+function parse(data: unknown): Map<number, DongBoundary> {
+  const result = new Map<number, DongBoundary>();
+  if (typeof data !== 'object' || data === null) return result;
+  const { dongs } = data as { dongs?: unknown };
+  if (typeof dongs !== 'object' || dongs === null) return result;
+
+  for (const [code, value] of Object.entries(dongs)) {
+    if (!Array.isArray(value) || value.length === 0 || !value.every(isFlatRings)) continue;
+    const polygons = value as FlatRing[][];
+    result.set(Number(code), {
+      polygons: polygons.map((rings) => rings.map(toPath)),
+      center: centerOf(polygons),
+    });
+  }
+  return result;
+}
+
+let cache: Promise<Map<number, DongBoundary> | null> | null = null;
+
+/**
+ * WebView가 다시 로드되기 전까지는 한 번만 받는다.
+ * 실패하면 캐시를 비우고 null을 돌려준다. 다시 시도는 훅이 예약한다.
+ */
+function load(): Promise<Map<number, DongBoundary> | null> {
+  cache ??= fetch(BOUNDARIES_URL)
+    .then((response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.json() as Promise<unknown>;
+    })
+    .then(parse)
+    .catch((error: unknown) => {
+      cache = null;
+      log(
+        'warn',
+        `동 경계를 불러오지 못했습니다: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return null;
+    });
+  return cache;
+}
+
+const EMPTY: DongBoundaries = new Map();
+
+/** 실패한 뒤 다시 받기까지 기다리는 시간. 실패할 때마다 두 배로 늘린다. */
+const RETRY_BASE_MS = 2000;
+const RETRY_MAX_MS = 60000;
+
+/** 땅따먹기가 열렸을 때(enabled)만 경계를 받는다. 첫 로딩 시간에 영향을 주지 않기 위해서다. */
+export default function useDongBoundaries(enabled: boolean): DongBoundaries {
+  const [boundaries, setBoundaries] = useState<DongBoundaries>(EMPTY);
+  /** 실패한 횟수. 바뀌면 effect가 다시 돌아 load()를 다시 부른다 */
+  const [failures, setFailures] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    const delay = failures === 0 ? 0 : Math.min(RETRY_BASE_MS * 2 ** (failures - 1), RETRY_MAX_MS);
+    const timer = setTimeout(() => {
+      void load().then((loaded) => {
+        if (cancelled) return;
+        if (loaded) setBoundaries(loaded);
+        else setFailures((count) => count + 1);
+      });
+    }, delay);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [enabled, failures]);
+
+  return boundaries;
+}
