@@ -18,16 +18,12 @@
   </head>
   <body>
     <main class="share">
-      <h1 class="share__brand">티키타카</h1>
-      <article class="share__card" id="post" aria-busy="true">
-        <p class="share__status">게시글을 불러오고 있어요</p>
-      </article>
-      <p class="share__hint">앱에서 좋아요를 누르고 우리 동네를 응원해 보세요!</p>
+      <img class="share__logo" src="/share/logo.webp" alt="티키타카" draggable="false" />
+      <div class="share__post" id="post" aria-busy="true"></div>
     </main>
-    <nav class="share__cta" aria-label="앱으로 이동">
-      <a class="share__button share__button--primary" id="open-app" href="#">앱에서 보기</a>
-      <a class="share__button share__button--light" id="install-app" href="#">앱 설치하기</a>
-    </nav>
+    <div class="share__cta">
+      <a class="share__button" id="open-app" href="#">티키타카 앱에서 보기</a>
+    </div>
     <script type="module" src="/src/share/main.ts"></script>
   </body>
 </html>

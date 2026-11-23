@@ -1,3 +1,4 @@
+/* 앱 게시글 상세(src/app/(tabs)/feed/[post_id].tsx)와 같은 배치·토큰. 클래스 옆 주석은 대응하는 앱 클래스다. */
 html,
 body {
   margin: 0;
@@ -8,126 +9,286 @@ body {
 body {
   color: var(--color-gray-800);
   font-family: var(--font-body);
+  font-weight: 500;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
+/* 앱: SafeAreaView bg-gray-50 + ScrollView gap-2xl px-xl pt-lg */
 .share {
   box-sizing: border-box;
   max-width: 480px;
   margin: 0 auto;
-  /* 하단 고정 버튼(2개 + 간격)에 마지막 내용이 가리지 않게 비워 둔다 */
-  padding: var(--space-2xl) var(--space-xl) calc(var(--space-4xl) * 3 + env(safe-area-inset-bottom));
+  padding: var(--space-lg) var(--space-xl)
+    calc(var(--space-4xl) + var(--space-2xl) + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+/* 앱 Header 로고: h-8 w-[124px] contain */
+.share__logo {
+  width: 124px;
+  height: 32px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.share__post {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+/* 앱 Typography */
+.share-text {
+  margin: 0;
+}
+.share-text--h3 {
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  font-weight: 700;
+}
+.share-text--body2 {
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  font-weight: 500;
+}
+.share-text--body3 {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  font-weight: 500;
+}
+.share-text--gray-400 {
+  color: var(--color-gray-400);
+}
+.share-text--gray-500 {
+  color: var(--color-gray-500);
+}
+.share-text--gray-700 {
+  color: var(--color-gray-700);
+}
+.share-text--gray-800 {
+  color: var(--color-gray-800);
+}
+
+/* 앱: View flex-col gap-lg (PostAuthor + PostImage) */
+.share-post__top {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
 }
 
-.share__brand {
-  margin: 0;
-  font-family: var(--font-title);
-  font-size: var(--font-size-xl);
-  line-height: var(--line-height-xl);
-  font-weight: normal;
-  color: var(--color-primary-600);
-}
-
-.share__card {
+/* 앱 PostAuthor */
+.share-author {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  padding: var(--space-lg);
-  border-radius: var(--radius-lg);
-  background: var(--color-white);
+  align-items: center;
+  gap: var(--space-lg);
 }
-
-.share__author {
+.share-author__info {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  min-width: 0;
+}
+.share-author__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.share-author__place {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.share-author__place-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  color: var(--color-gray-400);
 }
 
-.share__author-name {
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-md);
-}
-
-.share__meta,
-.share__likes {
-  font-size: var(--font-size-xs);
-  line-height: var(--line-height-xs);
-  color: var(--color-gray-500);
-}
-
-.share__image {
+.share-author__place-icon svg,
+.share-like__icon svg,
+.share-score__info svg {
   width: 100%;
-  border-radius: var(--radius-md);
+  height: 100%;
+}
+
+/* 앱 Character: 1024 디자인 프레임이 컨테이너를 채우도록 1440 캔버스를 확대 (OVERSCALE) */
+.share-character {
+  position: relative;
+  flex-shrink: 0;
+}
+.share-character__layers {
+  position: absolute;
+  top: -20.3125%;
+  left: -20.3125%;
+  width: 140.625%;
+  height: 140.625%;
+}
+.share-character__part {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* 앱 PostImage: h-[320px] w-full rounded-lg */
+.share-image {
+  display: block;
+  width: 100%;
+  height: 320px;
+  border-radius: var(--radius-lg);
   background: var(--color-gray-100);
   object-fit: cover;
   -webkit-user-drag: none;
 }
 
-.share__content {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
+/* 앱 PostTitleRow */
+.share-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+.share-title-row__content {
+  flex: 1;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.share__status {
-  margin: 0;
+/* 앱 LikeButton: 아이콘 20, gap-xs, flex-row items-center */
+.share-like {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.share-like__icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  color: var(--color-gray-400);
+}
+
+/* 앱 AiScoreCard */
+.share-score {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xl);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-gray-100);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+}
+.share-score__summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+.share-score__number {
+  font-size: var(--font-size-5xl);
+  line-height: var(--line-height-5xl);
+  font-weight: 700;
+  color: var(--color-primary-600);
+}
+.share-score__divider {
+  flex-shrink: 0;
+  width: 2px;
+  height: 81px;
+  border-radius: var(--radius-xs);
+  background: var(--color-gray-200);
+}
+.share-score__comment {
+  flex: 1;
+  padding: var(--space-md) var(--space-xl) 0 0;
+  /* 앱 leading-5 */
+  line-height: 20px;
+}
+.share-score__info {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  color: var(--color-gray-300);
+}
+
+/* 앱 AiScoreCheckCard */
+.share-score-check {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-2xl);
+  border-radius: var(--radius-md);
+  background: linear-gradient(var(--color-white), var(--color-score-gradient-end));
+}
+.share-score-check__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.share-score__number--rolling {
+  animation: share-score-pulse 450ms ease-in-out infinite alternate;
+}
+@keyframes share-score-pulse {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.08);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .share-score__number--rolling {
+    animation: none;
+  }
+}
+
+/* 앱 Button size="sm": px-lg py-sm rounded-sm, h4 */
+.share-small-button {
+  padding: var(--space-sm) var(--space-lg);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-600);
+  color: var(--color-white);
+  font-family: inherit;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.share-status {
   padding: var(--space-3xl) 0;
   text-align: center;
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-sm);
-  color: var(--color-gray-500);
 }
 
-.share__hint {
-  margin: 0;
-  text-align: center;
-  font-size: var(--font-size-sm);
-  line-height: var(--line-height-sm);
-  color: var(--color-gray-600);
-}
-
+/* 하단 고정 버튼. 앱 Button size="md": p-md rounded-sm, h3 */
 .share__cta {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
   max-width: 480px;
   margin: 0 auto;
   padding: var(--space-md) var(--space-xl) calc(var(--space-md) + env(safe-area-inset-bottom));
   background: var(--color-gray-50);
 }
-
 .share__button {
   display: block;
   padding: var(--space-md);
-  border-radius: var(--radius-md);
-  text-align: center;
-  text-decoration: none;
-  font-size: var(--font-size-lg);
-  line-height: var(--line-height-lg);
-  font-weight: 600;
-}
-
-.share__button[hidden] {
-  display: none;
-}
-
-.share__button--primary {
+  border-radius: var(--radius-sm);
   background: var(--color-primary-600);
   color: var(--color-white);
-}
-
-.share__button--light {
-  background: var(--color-primary-100);
-  color: var(--color-primary-600);
+  text-align: center;
+  text-decoration: none;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  font-weight: 700;
 }

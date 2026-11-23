@@ -13,6 +13,9 @@ const PostDetailSchema = z.object({
   /** 발급 실패하면 빠진다. 10분짜리 presigned URL이다. */
   post_image_url: z.optional(z.string()),
   like_count: z.number(),
+  /** 심사를 통과한(DONE) 글만 공개 조회되므로 대개 있다. */
+  score: z.optional(z.number()),
+  ai_review: z.optional(z.string()),
   /** 타임존 없는 KST 문자열. 예: '2026-09-07T21:34:56.789' */
   created_at: z.string(),
 });
