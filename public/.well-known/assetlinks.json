@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.tikitaka.raon",
+      "sha256_cert_fingerprints": [
+        "CF:6A:DF:CF:28:0A:89:AB:A4:26:A4:3B:B4:C5:19:2B:AF:31:AF:6F:6A:09:DD:F6:0A:3F:81:72:B7:80:1F:3B"
+      ]
+    }
+  }
+]
