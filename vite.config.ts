@@ -42,6 +42,7 @@ export default defineConfig({
     // 운영은 vercel.json rewrite가 같은 출처로 프록시한다. 로컬도 같은 경로로 맞춰 CORS 없이 부른다.
     proxy: {
       '/api/post': { target: API_ORIGIN, changeOrigin: true },
+      '/api/equipment': { target: API_ORIGIN, changeOrigin: true },
     },
   },
 });

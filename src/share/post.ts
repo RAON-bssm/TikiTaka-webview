@@ -6,6 +6,7 @@ import * as z from 'zod/mini';
  * 앱 레포(TikiTaka-app)와 동기화 필요: src/types/post.ts의 PostDetail
  */
 const PostDetailSchema = z.object({
+  user_id: z.optional(z.string()),
   user_name: z.string(),
   content: z.string(),
   city_name: z.string(),

@@ -3,10 +3,12 @@ import '../styles/fonts.css';
 import '../styles/pretendard-medium.css';
 import '../styles/pretendard-bold.css';
 import './share.css';
+import type { CharacterConfig } from '../bridge/bridge';
 import { DEFAULT_CHARACTER_CONFIG, LAYERS } from '../character/layers';
 import { resolvePart } from '../character/resolvePart';
 import favoriteIcon from './favorite.svg?raw';
 import infoIcon from './info.svg?raw';
+import { fetchAuthorCharacter } from './character';
 import { APP_STORE_URL, detectPlatform, getOpenAppUrl } from './links';
 import placeIcon from './place.svg?raw';
 import { fetchSharedPost, type SharedPost } from './post';
@@ -41,16 +43,16 @@ function icon(svg: string, className: string) {
 }
 
 /**
- * 착용 정보 API(`/api/equipment`)는 로그인이 필요해, 앱이 정보를 못 받았을 때처럼 기본 캐릭터를 그린다.
+ * 작성자 착용 정보를 못 받으면 앱처럼 기본 캐릭터를 그린다.
  * 기하는 지도 캐릭터(CharacterSprite.css)·앱 Character와 같다.
  */
-function renderCharacter() {
+function renderCharacter(config: CharacterConfig) {
   const sprite = el('div', 'share-character');
   sprite.style.width = `${AUTHOR_CHARACTER_SIZE}px`;
   sprite.style.height = `${AUTHOR_CHARACTER_SIZE}px`;
   const layers = el('div', 'share-character__layers');
   for (const layer of LAYERS) {
-    const src = resolvePart(DEFAULT_CHARACTER_CONFIG, layer);
+    const src = resolvePart(config, layer);
     if (!src) continue;
     const part = el('img', 'share-character__part');
     part.src = src;
@@ -62,7 +64,7 @@ function renderCharacter() {
   return sprite;
 }
 
-function renderAuthor(post: SharedPost) {
+function renderAuthor(post: SharedPost, character: CharacterConfig) {
   const place = el('div', 'share-author__place');
   place.append(
     icon(placeIcon, 'share-author__place-icon'),
@@ -84,7 +86,7 @@ function renderAuthor(post: SharedPost) {
   info.append(el('strong', 'share-text share-text--h3 share-text--gray-800', post.user_name), meta);
 
   const author = el('div', 'share-author');
-  author.append(renderCharacter(), info);
+  author.append(renderCharacter(character), info);
   return author;
 }
 
@@ -156,9 +158,9 @@ function renderScoreCheckCard(score: number, comment: string) {
   return card;
 }
 
-function renderPost(post: SharedPost) {
+function renderPost(post: SharedPost, character: CharacterConfig) {
   const top = el('div', 'share-post__top');
-  top.append(renderAuthor(post), renderImage(post));
+  top.append(renderAuthor(post, character), renderImage(post));
 
   const nodes: HTMLElement[] = [top, renderTitleRow(post)];
   if (post.score !== undefined) nodes.push(renderScoreCheckCard(post.score, post.ai_review ?? ''));
@@ -190,8 +192,13 @@ async function load() {
   }
   try {
     const post = await fetchSharedPost(postId);
-    if (post) renderPost(post);
-    else renderStatus('삭제되었거나 볼 수 없는 게시글이에요.');
+    if (!post) {
+      renderStatus('삭제되었거나 볼 수 없는 게시글이에요.');
+      return;
+    }
+    // 기본 캐릭터를 먼저 그렸다 바꾸면 깜빡여서, 받아 온 뒤 한 번에 그린다. 실패해도 게시글은 보여 준다.
+    const character = post.user_id ? await fetchAuthorCharacter(post.user_id) : null;
+    renderPost(post, character ?? DEFAULT_CHARACTER_CONFIG);
   } catch {
     renderStatus('게시글을 불러오지 못했어요. 앱에서 확인해 주세요.');
   } finally {
