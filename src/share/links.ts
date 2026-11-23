@@ -3,34 +3,33 @@ const APP_SCHEME = 'tikitaka';
 const ANDROID_PACKAGE = 'com.tikitaka.raon';
 
 export const APP_STORE_URL = 'https://apps.apple.com/kr/app/id6822633977';
-/** Android는 원스토어로만 배포한다. 비어 있으면 Android에서 설치 버튼을 숨긴다. */
+/** Android는 원스토어로만 배포한다. 비어 있으면 앱이 없을 때 Chrome 기본 동작(Play 스토어 검색)으로 넘어간다. */
 export const ONE_STORE_URL = '';
 
 export type Platform = 'ios' | 'android' | 'other';
 
 export function detectPlatform(userAgent: string): Platform {
   if (/android/i.test(userAgent)) return 'android';
-  // iPadOS 13+ Safari는 데스크톱 UA(Macintosh)를 보내서 터치 지원으로 구분한다.
   if (/iphone|ipad|ipod/i.test(userAgent)) return 'ios';
+  // iPadOS 13+ Safari는 데스크톱 UA(Macintosh)를 보내서 터치 지원으로 구분한다.
   if (/macintosh/i.test(userAgent) && navigator.maxTouchPoints > 1) return 'ios';
   return 'other';
 }
 
-export function getStoreUrl(platform: Platform): string | null {
-  if (platform === 'ios') return APP_STORE_URL;
-  if (platform === 'android') return ONE_STORE_URL || null;
-  return null;
-}
-
 /**
- * 같은 도메인의 페이지 안에서 누른 링크는 iOS가 유니버설 링크로 열지 않아, 커스텀 스킴으로 연다.
- * Android는 intent URL로 열면 앱이 없을 때 Chrome·카톡 인앱 브라우저가 스토어로 대신 보낸다.
+ * 앱이 있으면 앱의 게시글로, 없으면 스토어로 보내는 주소.
+ * - Android: intent URL. 앱이 없으면 Chrome·카톡 인앱 브라우저가 `browser_fallback_url`(원스토어)로 보낸다.
+ * - iOS: 같은 도메인 페이지 안에서 누른 링크는 유니버설 링크로 열리지 않아 커스텀 스킴을 쓴다.
+ *   앱이 없을 때 스토어로 넘기는 건 `main.ts`의 타이머가 한다.
+ * - 그 밖(PC 등): 앱을 열 수 없으니 App Store 페이지로 보낸다.
  */
 export function getOpenAppUrl(platform: Platform, postId: string): string {
   const path = `p/${encodeURIComponent(postId)}`;
-  if (platform !== 'android') return `${APP_SCHEME}://${path}`;
+  if (platform === 'ios') return `${APP_SCHEME}://${path}`;
+  if (platform === 'other') return APP_STORE_URL;
 
-  const storeUrl = getStoreUrl(platform);
-  const fallback = storeUrl ? `S.browser_fallback_url=${encodeURIComponent(storeUrl)};` : '';
+  const fallback = ONE_STORE_URL
+    ? `S.browser_fallback_url=${encodeURIComponent(ONE_STORE_URL)};`
+    : '';
   return `intent://${path}#Intent;scheme=${APP_SCHEME};package=${ANDROID_PACKAGE};${fallback}end`;
 }

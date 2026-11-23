@@ -206,7 +206,7 @@ docs/map-web-plan.md     # 구현 계획 (설계 기준 문서)
 - **폰트:** Pretendard(Regular/Medium/Bold, 본문), OkDanDan-Bold(캐릭터 이름표·강조). 앱 `assets/fonts/`의 파일을 `public/fonts/`에 두고 `src/styles/fonts.css`에서 선언합니다.
   - **OkDanDan(Ok단단체)은 웹 사용·임베딩은 되지만 폰트 파일 수정·재배포가 금지**입니다. WOFF2 변환이나 서브셋을 하지 말고 원본 TTF를 그대로 씁니다.
   - **Pretendard는 `'Pretendard'`가 예약 글꼴 이름(OFL)이라, 직접 변환·서브셋한 파일을 이 이름으로 쓰면 안 됩니다.** npm `pretendard` 패키지의 공식 동적 서브셋(`dist/web/static/woff2-dynamic-subset/`, 굵기당 92조각)을 그대로 복사하고, `src/styles/pretendard-semibold.css`에서 경로만 바꿔 선언합니다. 화면에 나온 글자가 든 조각만 받습니다.
-  - 지금은 SemiBold(600, 말풍선)만 있습니다. 다른 굵기가 필요하면 같은 방법으로 추가합니다.
+  - 지도는 SemiBold(600, 말풍선)만 씁니다. Medium(500)·Bold(700)은 앱 본문·제목과 맞추려고 게시글 공유 페이지(`share.html`)만 불러옵니다(`pretendard-medium.css`, `pretendard-bold.css`). 다른 굵기가 필요하면 같은 방법으로 추가합니다.
 - 지도 로드 전 배경은 `gray-50`(`#F8F9FB`)입니다. 흰 화면이 번쩍이지 않게 `html`, `body`, `#root`에 지정합니다.
 
 ---
