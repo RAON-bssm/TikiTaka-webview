@@ -12,6 +12,7 @@
 - **웹은 지도와 지도 위에서 움직이는 것만 그립니다.** 지도, 캐릭터, 말풍선, (추후) 스티커가 전부입니다.
 - **데이터와 나머지 UI는 앱(RN)이 담당합니다.** 인증, API 호출, 챗봇 화면, 바텀시트, 동네 토글, 꾸미기 도구, 저장/취소 버튼은 웹에 만들지 마세요.
 - **웹은 백엔드 API를 직접 호출하지 않습니다.** 필요한 데이터는 모두 브리지 메시지(`init` 등)로 받습니다. 토큰·개인정보도 받지 않습니다.
+- **예외: 게시글 공유 페이지(`share.html`, `/p/:postId`).** 앱 밖 브라우저에서 열리는 별도 진입점이라 브리지가 없어서, 로그인 없이 되는 `GET /api/post/{id}`만 직접 부릅니다(`vercel.json` rewrite로 같은 출처 프록시). 보기 전용이고 로그인·쓰기 기능은 만들지 않으며, 앱 열기·설치로 유도합니다. 지도 번들(`index.html`)과 코드를 섞지 마세요.
 - **웹 안에 고정 UI(헤더, 버튼, 토스트 등)를 두지 않습니다.** 웹은 전체 화면을 지도로 채우고, 상단 UI와 Safe area는 RN이 WebView 위에 올려 처리합니다.
 - **크로스 플랫폼 일치성:** iOS(WKWebView)와 Android(Chromium WebView)에서 같은 모습과 동작이어야 합니다. 한쪽 WebView에서만 되는 API나 CSS는 피하세요.
 - **라이트 모드 고정.** 앱이 라이트 모드 전용이므로 다크 모드 스타일을 만들지 않습니다.
@@ -25,7 +26,8 @@
 - **메시지 검증:** `zod` (번들 크기 때문에 `zod/mini`로 import)
 - **린트:** oxlint (`.oxlintrc.json`)
 - **패키지 매니저:** **pnpm** (절대 `npm`, `yarn`, `bun`을 사용하지 마세요)
-- **배포:** Vercel (고정 도메인). `main`은 운영(`https://tiki-taka-webview.vercel.app`), `dev`는 개발 서버(`https://tiki-taka-webview-dev.vercel.app`)로 배포됩니다.
+- **배포:** Vercel (고정 도메인). `main`은 운영(`https://tiki-taka-webview.vercel.app`, `https://web-view.raon-tikitaka.shop`), `dev`는 개발 서버(`https://tiki-taka-webview-dev.vercel.app`)로 배포됩니다.
+  - `web-view.raon-tikitaka.shop`은 앱 공유 링크(유니버설 링크·앱 링크) 도메인이기도 합니다. `public/.well-known/`의 도메인 인증 파일을 지우거나 리다이렉트를 걸면 링크로 앱이 열리지 않습니다.
 
 ### 핵심 패키지 버전 (package.json 기준)
 
@@ -73,7 +75,9 @@ pnpm gen:dong-boundaries  # scripts/data/busan_dong.geojson → public/territory
 public/
 ├ parts/                 # 기본 캐릭터 파츠 (앱 assets/character와 같은 구조)
 ├ fonts/                 # OkDanDan-Bold (앱과 같은 원본 TTF), pretendard/ (공식 SemiBold 동적 서브셋 + LICENSE)
-└ territory/             # dong-boundaries.json (땅따먹기 동 경계, 자동 생성)
+├ territory/             # dong-boundaries.json (땅따먹기 동 경계, 자동 생성)
+├ share/og-image.png     # 공유 페이지 미리보기 이미지 (앱 아이콘)
+└ .well-known/           # 앱 링크 도메인 인증 파일 (apple-app-site-association, assetlinks.json)
 scripts/gen-manifest.mjs # public/parts → src/parts/manifest.ts
 scripts/gen-dong-boundaries.mjs # scripts/data/busan_dong.geojson → public/territory/dong-boundaries.json
 src/
@@ -84,6 +88,7 @@ src/
 ├ character/             # layers.ts, resolvePart.ts, CharacterSprite (imageCache는 M4)
 ├ bubble/                # SpeechBubble, useBubbles(캐릭터별 말풍선 + 사라지는 타이머)
 ├ territory/             # 땅따먹기: TerritoryLayer(동 폴리곤을 관계 색으로 칠하고 dongTap 전송), useDongBoundaries(경계 지연 로드)
+├ share/                 # 게시글 공유 페이지(share.html 진입점, React 없이 DOM으로 그림): main.ts, post.ts(API), links.ts(앱 열기·스토어 링크)
 ├ sticker/               # (M6) 스티커 레이어·편집 모드
 ├ dev/                   # 개발 전용 화면 (예: SpritePreview, `pnpm dev`에서 `/?sprite`). 운영 번들에 들어가지 않게 `import.meta.env.DEV`로 막는다
 ├ parts/manifest.ts      # 번들 파츠 경로 목록 (자동 생성)
