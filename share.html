@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>티키타카 | 우리 동네 게시글</title>
+    <!--
+      카톡 등 미리보기 수집기는 JS를 실행하지 않아, 게시글마다 다른 값이 아니라 고정 미리보기를 쓴다.
+      게시글별 미리보기는 서버 렌더링(Vercel Function)이 생기면 바꾼다.
+    -->
+    <meta name="description" content="티키타카에서 우리 동네 사진을 확인해 보세요." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="티키타카" />
+    <meta property="og:title" content="티키타카에서 우리 동네 게시글 보기" />
+    <meta property="og:description" content="동네 리그에 참여하고 우리 동네를 응원해 보세요!" />
+    <meta property="og:image" content="https://web-view.raon-tikitaka.shop/share/og-image.png" />
+  </head>
+  <body>
+    <main class="share">
+      <h1 class="share__brand">티키타카</h1>
+      <article class="share__card" id="post" aria-busy="true">
+        <p class="share__status">게시글을 불러오고 있어요</p>
+      </article>
+      <p class="share__hint">앱에서 좋아요를 누르고 우리 동네를 응원해 보세요!</p>
+    </main>
+    <nav class="share__cta" aria-label="앱으로 이동">
+      <a class="share__button share__button--primary" id="open-app" href="#">앱에서 보기</a>
+      <a class="share__button share__button--light" id="install-app" href="#">앱 설치하기</a>
+    </nav>
+    <script type="module" src="/src/share/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["64FFS3NVX7.com.tikitaka.raon"],
+        "components": [{ "/": "/p/*", "comment": "게시글 공유 링크" }]
+      }
+    ]
+  }
+}
