@@ -11,6 +11,10 @@
     {
       "source": "/api/post/:postId",
       "destination": "https://api.raon-tikitaka.shop/api/post/:postId"
+    },
+    {
+      "source": "/api/equipment/:userId",
+      "destination": "https://api.raon-tikitaka.shop/api/equipment/:userId"
     }
   ]
 }
