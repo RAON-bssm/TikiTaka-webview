@@ -1,6 +1,7 @@
 import * as z from 'zod/mini';
 import type { CharacterConfig } from '../bridge/bridge';
 import { DEFAULT_CHARACTER_CONFIG } from '../character/layers';
+import { toWebColorId, toWebPartId } from '../character/partId';
 
 /**
  * `GET /api/equipment/{userId}`(작성자 착용 정보). 앱 `src/types/equipment.ts`의 Equipment와 같은 모양이고,
@@ -35,23 +36,6 @@ const SLOT_TO_KEY: Record<ShapeSlot, ShapeKey> = {
   mouth: 'mouth',
 };
 
-/** 이 접두사가 붙은 새 id는 접두사를 떼면 웹 에셋 이름이 된다. 예: 'hair-back-long' → 'long' */
-const PREFIXED: Partial<Record<ShapeKey, string>> = {
-  accessory: 'accessory-',
-  hairBack: 'hair-back-',
-  hairFront: 'hair-front-',
-};
-
-/**
- * 앱·서버는 파츠 id를 `종류-이름`(예: 'body-02', 'hair-back-long')으로 바꿨지만, 웹 `public/parts/`는 아직
- * 옛 이름('body02', 'long')이다. 옛 id가 오면 그대로 둔다. 앱 `src/constants/character/legacyIds.ts`의 반대 방향이다.
- */
-function toWebPartId(key: ShapeKey, id: string): string {
-  const prefix = PREFIXED[key];
-  if (prefix) return id.startsWith(prefix) ? id.slice(prefix.length) : id;
-  return id.replace(/-(\d+)$/, '$1');
-}
-
 /**
  * 앱 `equipmentToConfig`와 같은 규칙. 서버 색 코드는 대문자('BLACK'), 웹 에셋은 소문자다.
  * 웹에 없는 파츠·색은 `resolvePart`가 슬롯별로 기본 캐릭터 것으로 바꿔 그린다.
@@ -64,8 +48,8 @@ function toConfig(equipment: Equipment): CharacterConfig {
     const key = SLOT_TO_KEY[slot];
     config[key] = toWebPartId(key, item.product_id);
   }
-  if (equipment.hair_color) config.hairColor = equipment.hair_color.toLowerCase();
-  if (equipment.eyes_color) config.eyesColor = equipment.eyes_color.toLowerCase();
+  if (equipment.hair_color) config.hairColor = toWebColorId(equipment.hair_color);
+  if (equipment.eyes_color) config.eyesColor = toWebColorId(equipment.eyes_color);
   return config;
 }
 
