@@ -1,20 +1,30 @@
 import type { CharacterConfig, PartUrlMap } from '../bridge/bridge';
 import { BUNDLED_PARTS } from '../parts/manifest';
 import { DEFAULT_CHARACTER_CONFIG, OPTIONAL_GROUPS, type LayerDef } from './layers';
+import { toWebColorId, toWebPartId } from './partId';
 
 const toKebab = (value: string) => value.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 
-/** 레이어의 경로 키. 예: 'hair-back/bob/pink'. 값이 없으면 null */
+/**
+ * 레이어의 경로 키. 예: 'hair-back/bob/pink'. 값이 없으면 null
+ * 앱은 새 id('hair-back-bob')와 대문자 색('PINK')을 보내므로 웹 에셋 이름으로 바꿔서 찾는다.
+ */
 function partKey(config: CharacterConfig, layer: LayerDef): string | null {
   if ('tint' in layer) {
     const color = config[layer.color];
-    return color ? `${toKebab(layer.tint)}/${color}` : null;
+    return color ? `${toKebab(layer.tint)}/${toWebColorId(color)}` : null;
   }
   const shape = config[layer.group];
   if (!shape) return null;
   const color = layer.color ? config[layer.color] : undefined;
   if (layer.color && !color) return null;
-  return [toKebab(layer.group), shape, color].filter(Boolean).join('/');
+  return [
+    toKebab(layer.group),
+    toWebPartId(layer.group, shape),
+    color ? toWebColorId(color) : undefined,
+  ]
+    .filter(Boolean)
+    .join('/');
 }
 
 /** HTTPS만 받는다. HTTP는 혼합 콘텐츠로 막히고, 잘못된 문자열은 이미지로 쓸 수 없다. */
